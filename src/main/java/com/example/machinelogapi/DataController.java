@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,5 +31,14 @@ public class DataController {
         response.put("machines", machines);
 
         return response;
+    }
+
+    @GetMapping("/machine")
+    public Map<String, Object> getMachineSpecifics (@RequestParam(required = true) String machineNumber) {
+        // Create the nested structure for the response
+        Map<String, Object> response = new HashMap<>();
+        response.put("machine number",machineNumber);
+        return response;
+        // http://localhost:8080/api/machine?machineNumber=3
     }
 }
