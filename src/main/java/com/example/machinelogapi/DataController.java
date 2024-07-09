@@ -15,30 +15,16 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:5173")
 public class DataController {
 
+    CSVParser parser = new CSVParser();
+
     @GetMapping("/overview")
-    public Map<String, Object> getOverview() {
-        // Create the nested structure for the response
-        Map<String, Object> response = new HashMap<>();
-
-        response.put("data", "Overview");
-
-        // Create the machines data
-        Map<String, Object> machines = new HashMap<>();
-        machines.put("numbers", List.of("1", "2", "3", "17", "19", "26", "27", "28"));
-        machines.put("percentRun", List.of(73, 80, 64, 30, 45, 30, 60, 12));
-
-        // Add machines data to the response
-        response.put("machines", machines);
-
-        return response;
+    public Map<String, Object> getOverview(@RequestParam(required = true) String date) {
+        return parser.getOverviewData(date);
     }
 
     @GetMapping("/machine")
-    public Map<String, Object> getMachineSpecifics (@RequestParam(required = true) String machineNumber) {
-        // Create the nested structure for the response
-        Map<String, Object> response = new HashMap<>();
-        response.put("machine number",machineNumber);
-        return response;
+    public Map<String, Object> getMachineCard (@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
+        return parser.getMachineCardData(machineNumber, date);
         // http://localhost:8080/api/machine?machineNumber=3
     }
 }
