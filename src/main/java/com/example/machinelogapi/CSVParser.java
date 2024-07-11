@@ -195,12 +195,20 @@ public class CSVParser {
             }
 
 
+            List<Map<String, Object>> faultReport = new ArrayList<>();
+            for (String fault : faultDownTime.keySet()) {
+                Map<String, Object> faultRow = new HashMap<>();
+                faultRow.put("Fault", fault);
+                faultRow.put("Fault Down Time", faultDownTime.get(fault));
+                faultRow.put("Percentage / time", faultTimePercentage.get(fault));
+                faultRow.put("Number of Faults", faultCount.get(fault));
+                faultRow.put("Percentage / qty faults", faultCountPercentage.get(fault));
+                faultReport.add(faultRow);
+            }
+
             response.put("machineNumber", machineNumber);
             response.put("totalDownTime", totalDownTime);
-            response.put("downTime", faultDownTime);
-            response.put("downTimePercentage", faultTimePercentage);
-            response.put("faultCount", faultCount);
-            response.put("faultCountPercentage", faultCountPercentage);
+            response.put("faultReport", faultReport);
 
         } catch (IOException e) {
             // Return a consistent structure with error message
