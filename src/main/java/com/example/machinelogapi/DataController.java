@@ -22,7 +22,7 @@ public class DataController {
         return parser.getOverviewData(date);
     }
 
-    @GetMapping("/machine")
+    @GetMapping("/machineCard")
     public Map<String, Object> getMachineCard (@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
         return parser.getMachineCardData(machineNumber, date);
         // http://localhost:8080/api/machine?machineNumber=3
@@ -31,5 +31,10 @@ public class DataController {
     @GetMapping("/machineNumbers")
     public int[] getMachineNumbers() {
         return parser.getMachineNumbers();
+    }
+
+    @GetMapping("/faultLog")
+    public Map<String, Object> getFaultLog(@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
+        return parser.getFaultLog(machineNumber, date);
     }
 }

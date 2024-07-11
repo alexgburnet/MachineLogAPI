@@ -107,8 +107,47 @@ public class CSVParser {
         return response;
     }
 
+    public Map<String, Object> getFaultLog(String machineNo, String date) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        csvFile = "data/" + date + " All Machines Knitting MCs Fault Log.csv";
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_16))) {
+
+            br.readLine(); // Skip line denoting delimiter
+
+            String[] header = br.readLine().split(delimiter);
+            List<Map<String, String>> faultLog = new ArrayList<>();
+            while ((line = br.readLine()) != null) {
+                String[] columns = line.split(delimiter);
+                if (!columns[6].trim().equals(machineNo)) {
+                    continue; // Skip records that don't match the given machine number
+                }
+                Map<String, String> fault = new HashMap<>();
+                for (int i = 0; i < columns.length; i++) {
+                    fault.put(header[i], columns[i]);
+                }
+                faultLog.add(fault);
+            }
+
+            response.put("header", header);
+            response.put("faultLog", faultLog);
+
+
+        } catch (IOException e) {
+            // Return a consistent structure with error message
+            response.put("error", "Error reading CSV file: " + e.getMessage());
+            response.put("faultLog", new ArrayList<>()); // Provide empty faultLog structure
+        }
+
+
+        return response;
+    }
+
+
     public int[] getMachineNumbers() {
-        return new int[] {1, 17, 2, 3, 19, 26, 27, 28};
+        return new int[] {1, 2, 3, 17, 19, 26, 27, 28};
     }
 
     private static Duration parseFaultTime(String faultTimeStr) {
