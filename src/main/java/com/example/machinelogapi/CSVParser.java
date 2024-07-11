@@ -55,6 +55,9 @@ public class CSVParser {
 
         } catch (IOException e) {
             e.printStackTrace();
+            // Return a consistent structure with error message
+            response.put("error", "Error reading CSV file: " + e.getMessage());
+            response.put("machines", new HashMap<>()); // Provide empty machines structure
         }
 
         return response;
@@ -97,7 +100,10 @@ public class CSVParser {
             response.put("totalDownTime", totalDownTime);
 
         } catch (IOException e) {
-            return response;
+            // Return a consistent structure with error message
+            response.put("error", "Error reading CSV file: " + e.getMessage());
+            response.put("downTime", new HashMap<>()); // Provide empty downTime structure
+            response.put("totalDownTime", 0.0); // Provide default value
         }
 
         return response;
