@@ -4,6 +4,8 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.time.Duration;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class CSVParser {
 
@@ -153,15 +155,14 @@ public class CSVParser {
         Map<String, Double> faultCountPercentage = new HashMap<>();
         int totalFaults = 0;
 
-
-        csvFile = "data/" + date + " All Machines Knitting MCs Fault Log.csv";
+        String csvFile = "data/" + date + " All Machines Knitting MCs Fault Log.csv";
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_16))) {
             br.readLine(); // Skip header lines
             br.readLine();
+            String line;
             while ((line = br.readLine()) != null) {
                 String[] columns = line.split(delimiter);
-
                 int machineNo = Integer.parseInt(columns[6].trim());
                 if (!String.valueOf(machineNo).equals(machineNumber)) {
                     continue; // Skip records that don't match the given machine number
@@ -172,37 +173,46 @@ public class CSVParser {
                 Duration faultDuration = parseFaultTime(faultTimeStr);
 
                 double faultHours = faultDuration.toMinutes() / 60.0;
+
+                // Round faultHours to 1 decimal place
+                faultHours = roundToOneDecimalPlace(faultHours);
+
                 faultDownTime.put(fault, faultDownTime.getOrDefault(fault, 0.0) + faultHours);
                 faultCount.put(fault, faultCount.getOrDefault(fault, 0.0) + 1);
                 totalFaults++;
             }
 
-            double totalDownTime = 0.0;
-            for (Map.Entry<String, Double> entry : faultDownTime.entrySet()) {
-                double downTime = entry.getValue();
-                totalDownTime += downTime;
-            }
+            double totalDownTime = faultDownTime.values().stream().mapToDouble(Double::doubleValue).sum();
 
             for (Map.Entry<String, Double> entry : faultDownTime.entrySet()) {
                 String fault = entry.getKey();
                 double downTime = entry.getValue();
                 double downTimePercentage = downTime / totalDownTime * 100;
+
+                // Round downTimePercentage to 1 decimal place
+                downTimePercentage = roundToOneDecimalPlace(downTimePercentage);
+
                 faultTimePercentage.put(fault, downTimePercentage);
 
                 double count = faultCount.get(fault);
                 double countPercentage = count / totalFaults * 100;
+
+                // Round countPercentage to 1 decimal place
+                countPercentage = roundToOneDecimalPlace(countPercentage);
+
                 faultCountPercentage.put(fault, countPercentage);
             }
 
-
             List<Map<String, Object>> faultReport = new ArrayList<>();
             for (String fault : faultDownTime.keySet()) {
-                Map<String, Object> faultRow = new HashMap<>();
+                Map<String, Object> faultRow = new LinkedHashMap<>(); // Using LinkedHashMap to maintain insertion order
+
                 faultRow.put("Fault", fault);
-                faultRow.put("Fault Down Time", faultDownTime.get(fault));
-                faultRow.put("Percentage / time", faultTimePercentage.get(fault));
                 faultRow.put("Number of Faults", faultCount.get(fault));
-                faultRow.put("Percentage / qty faults", faultCountPercentage.get(fault));
+                faultRow.put("percentage / count", faultCountPercentage.get(fault));
+                faultRow.put("Fault Down Time", faultDownTime.get(fault));
+                faultRow.put("percentage / time", faultTimePercentage.get(fault));
+
                 faultReport.add(faultRow);
             }
 
@@ -220,6 +230,12 @@ public class CSVParser {
         return response;
     }
 
+    // Helper method to round a double to 1 decimal place
+    private double roundToOneDecimalPlace(double value) {
+        BigDecimal bd = BigDecimal.valueOf(value);
+        bd = bd.setScale(1, RoundingMode.HALF_UP);
+        return bd.doubleValue();
+    }
 
 
     public int[] getMachineNumbers() {
