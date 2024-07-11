@@ -27,4 +27,9 @@ public class DataController {
         return parser.getMachineCardData(machineNumber, date);
         // http://localhost:8080/api/machine?machineNumber=3
     }
+
+    @GetMapping("/machineNumbers")
+    public int[] getMachineNumbers() {
+        return parser.getMachineNumbers();
+    }
 }

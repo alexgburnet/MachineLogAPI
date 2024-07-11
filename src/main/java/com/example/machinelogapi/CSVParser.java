@@ -1,6 +1,7 @@
 package com.example.machinelogapi;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.time.Duration;
 
@@ -17,7 +18,7 @@ public class CSVParser {
 
         csvFile = "data/" + date + " All Machines Knitting MCs Fault Log.csv";
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), "UTF-16"))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_16))) {
             br.readLine(); // Skip header lines
             br.readLine();
             while ((line = br.readLine()) != null) {
@@ -42,8 +43,6 @@ public class CSVParser {
 
                 machineNumbers.add(machineNo);
                 percentRun.add(runningTimePercentage);
-
-                System.out.printf("Machine No: %d, Running Time Percentage: %.2f%%%n", machineNo, runningTimePercentage);
             }
 
             Map<String, Object> machines = new HashMap<>();
@@ -69,7 +68,7 @@ public class CSVParser {
 
         csvFile = "data/" + date + " All Machines Knitting MCs Fault Log.csv";
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), "UTF-16"))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_16))) {
             br.readLine(); // Skip header lines
             br.readLine();
             while ((line = br.readLine()) != null) {
@@ -81,7 +80,6 @@ public class CSVParser {
                 }
 
                 String fault = columns[2].trim(); // Assuming fault is in column 3 (index 2)
-                System.out.println("Fault: " + fault);
                 String faultTimeStr = columns[5].trim();
                 Duration faultDuration = parseFaultTime(faultTimeStr);
 
@@ -107,6 +105,10 @@ public class CSVParser {
         }
 
         return response;
+    }
+
+    public int[] getMachineNumbers() {
+        return new int[] {1, 17, 2, 3, 19, 26, 27, 28};
     }
 
     private static Duration parseFaultTime(String faultTimeStr) {
