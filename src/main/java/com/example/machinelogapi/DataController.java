@@ -37,4 +37,9 @@ public class DataController {
     public Map<String, Object> getFaultLog(@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
         return parser.getFaultLog(machineNumber, date);
     }
+
+    @GetMapping("/faultReport")
+    public Map<String, Object> getFaultReport(@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
+        return parser.getFaultReport(machineNumber, date);
+    }
 }

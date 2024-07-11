@@ -145,6 +145,74 @@ public class CSVParser {
         return response;
     }
 
+    public Map<String, Object> getFaultReport(String machineNumber, String date) {
+        Map<String, Object> response = new HashMap<>();
+        Map<String, Double> faultDownTime = new HashMap<>();
+        Map<String, Double> faultTimePercentage = new HashMap<>();
+        Map<String, Double> faultCount = new HashMap<>();
+        Map<String, Double> faultCountPercentage = new HashMap<>();
+        int totalFaults = 0;
+
+
+        csvFile = "data/" + date + " All Machines Knitting MCs Fault Log.csv";
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_16))) {
+            br.readLine(); // Skip header lines
+            br.readLine();
+            while ((line = br.readLine()) != null) {
+                String[] columns = line.split(delimiter);
+
+                int machineNo = Integer.parseInt(columns[6].trim());
+                if (!String.valueOf(machineNo).equals(machineNumber)) {
+                    continue; // Skip records that don't match the given machine number
+                }
+
+                String fault = columns[2].trim(); // Assuming fault is in column 3 (index 2)
+                String faultTimeStr = columns[5].trim();
+                Duration faultDuration = parseFaultTime(faultTimeStr);
+
+                double faultHours = faultDuration.toMinutes() / 60.0;
+                faultDownTime.put(fault, faultDownTime.getOrDefault(fault, 0.0) + faultHours);
+                faultCount.put(fault, faultCount.getOrDefault(fault, 0.0) + 1);
+                totalFaults++;
+            }
+
+            double totalDownTime = 0.0;
+            for (Map.Entry<String, Double> entry : faultDownTime.entrySet()) {
+                double downTime = entry.getValue();
+                totalDownTime += downTime;
+            }
+
+            for (Map.Entry<String, Double> entry : faultDownTime.entrySet()) {
+                String fault = entry.getKey();
+                double downTime = entry.getValue();
+                double downTimePercentage = downTime / totalDownTime * 100;
+                faultTimePercentage.put(fault, downTimePercentage);
+
+                double count = faultCount.get(fault);
+                double countPercentage = count / totalFaults * 100;
+                faultCountPercentage.put(fault, countPercentage);
+            }
+
+
+            response.put("machineNumber", machineNumber);
+            response.put("totalDownTime", totalDownTime);
+            response.put("downTime", faultDownTime);
+            response.put("downTimePercentage", faultTimePercentage);
+            response.put("faultCount", faultCount);
+            response.put("faultCountPercentage", faultCountPercentage);
+
+        } catch (IOException e) {
+            // Return a consistent structure with error message
+            response.put("error", "Error reading CSV file: " + e.getMessage());
+            response.put("downTime", new HashMap<>()); // Provide empty downTime structure
+            response.put("totalDownTime", 0.0); // Provide default value
+        }
+
+        return response;
+    }
+
+
 
     public int[] getMachineNumbers() {
         return new int[] {1, 2, 3, 17, 19, 26, 27, 28};
