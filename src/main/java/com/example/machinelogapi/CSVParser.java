@@ -145,28 +145,23 @@ public class CSVParser {
     }
 
     public Map<String, Object> getFaultLog(String machineNo, String date) {
+        Map<String, Object> response = new HashMap<>();
 
         String fulldate = formatDateDDMMYYYY(date);
         String csvFile = smbUrl + "%runningtime" + fulldate + "/" + date + " All Machines Knitting MCs Fault Log.csv";
-        //String csvFile = "smb://10.10.2.5/Long Eaton/STILLAGE REPORTS/%running time12072024/test.2.test.csv";
         System.out.println(csvFile);
 
         CIFSContext baseContext = SingletonContext.getInstance();
         NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", username, password);
         CIFSContext authContext = baseContext.withCredentials(auth);
 
-        Map<String, Object> response = new HashMap<>();
-
-        csvFile = "data/" + date + " All Machines Knitting MCs Fault Log.csv";
-
         try {
             SmbFile smbFile = new SmbFile(csvFile, authContext);
             try (BufferedReader br = new BufferedReader(new InputStreamReader(new SmbFileInputStream(smbFile), StandardCharsets.UTF_16))) {
-
                 br.readLine(); // Skip line denoting delimiter
-
                 String[] header = br.readLine().split(delimiter);
                 List<Map<String, String>> faultLog = new ArrayList<>();
+
                 while ((line = br.readLine()) != null) {
                     String[] columns = line.split(delimiter);
                     if (!columns[6].trim().equals(machineNo)) {
@@ -188,9 +183,9 @@ public class CSVParser {
             response.put("faultLog", new ArrayList<>()); // Provide empty faultLog structure
         }
 
-
         return response;
     }
+
 
     public Map<String, Object> getFaultReport(String machineNumber, String date) {
         Map<String, Object> response = new HashMap<>();
