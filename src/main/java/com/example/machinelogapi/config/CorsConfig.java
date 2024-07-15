@@ -14,7 +14,6 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins("*") // or specify your React app's IP address
                 .allowedMethods("GET", "POST", "PUT", "DELETE")
                 .allowedHeaders("*")
-                .allowCredentials(true)
                 .maxAge(3600);
     }
 }
