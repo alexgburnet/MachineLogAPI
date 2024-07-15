@@ -18,8 +18,6 @@ import jcifs.context.SingletonContext;
 
 public class CSVParser {
 
-    String csvFile = "data/4.7.2024 All Machines Knitting MCs Fault Log.csv";
-
     String delimiter = ";";
     String line = "";
 
@@ -35,7 +33,6 @@ public class CSVParser {
         String fulldate = formatDateDDMMYYYY(date);
         String csvFile = smbUrl + "%runningtime" + fulldate + "/" + date + " All Machines Knitting MCs Fault Log.csv";
         //String csvFile = "smb://10.10.2.5/Long Eaton/STILLAGE REPORTS/%running time12072024/test.2.test.csv";
-        System.out.println(csvFile);
 
         CIFSContext baseContext = SingletonContext.getInstance();
         NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", username, password);
@@ -94,7 +91,6 @@ public class CSVParser {
         String fulldate = formatDateDDMMYYYY(date);
         String csvFile = smbUrl + "%runningtime" + fulldate + "/" + date + " All Machines Knitting MCs Fault Log.csv";
         //String csvFile = "smb://10.10.2.5/Long Eaton/STILLAGE REPORTS/%running time12072024/test.2.test.csv";
-        System.out.println(csvFile);
 
         CIFSContext baseContext = SingletonContext.getInstance();
         NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", username, password);
@@ -149,7 +145,6 @@ public class CSVParser {
 
         String fulldate = formatDateDDMMYYYY(date);
         String csvFile = smbUrl + "%runningtime" + fulldate + "/" + date + " All Machines Knitting MCs Fault Log.csv";
-        System.out.println(csvFile);
 
         CIFSContext baseContext = SingletonContext.getInstance();
         NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", username, password);
