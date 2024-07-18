@@ -23,8 +23,28 @@ public class CSVParser {
 
     String smbUrl = "smb://10.10.2.5/Long Eaton/STILLAGE REPORTS/";
     // Long Eaton/STILLAGE REPORTS/%runningtime10112023
-    String username = "";
-    String password = "";
+    String smbUsername;
+    String smbPassword;
+    String psqlUsername;
+    String psqlPassword;
+
+    Properties props = new Properties();
+
+    public CSVParser() {
+        try {
+            props.load(new FileInputStream("/config.properties"));
+            smbUsername = props.getProperty("smb.username");
+            smbPassword = props.getProperty("smb.password");
+
+            psqlUsername = props.getProperty("psql.username");
+            psqlPassword = props.getProperty("psql.password");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
 
     public Map<String, Object> getOverviewData(String date) {
         Map<String, Object> response = new HashMap<>();
@@ -35,7 +55,7 @@ public class CSVParser {
         //String csvFile = "smb://10.10.2.5/Long Eaton/STILLAGE REPORTS/%running time12072024/test.2.test.csv";
 
         CIFSContext baseContext = SingletonContext.getInstance();
-        NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", username, password);
+        NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", smbUsername, smbPassword);
         CIFSContext authContext = baseContext.withCredentials(auth);
 
         try {
@@ -93,7 +113,7 @@ public class CSVParser {
         //String csvFile = "smb://10.10.2.5/Long Eaton/STILLAGE REPORTS/%running time12072024/test.2.test.csv";
 
         CIFSContext baseContext = SingletonContext.getInstance();
-        NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", username, password);
+        NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", smbUsername, smbPassword);
         CIFSContext authContext = baseContext.withCredentials(auth);
 
 
@@ -147,7 +167,7 @@ public class CSVParser {
         String csvFile = smbUrl + "%runningtime" + fulldate + "/" + date + " All Machines Knitting MCs Fault Log.csv";
 
         CIFSContext baseContext = SingletonContext.getInstance();
-        NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", username, password);
+        NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", smbUsername, smbPassword);
         CIFSContext authContext = baseContext.withCredentials(auth);
 
         try {
@@ -190,82 +210,78 @@ public class CSVParser {
         Map<String, Double> faultCountPercentage = new HashMap<>();
         int totalFaults = 0;
 
+        String fulldate = formatDateDDMMYYYY(date);
+        String csvFile = smbUrl + "%runningtime" + fulldate + "/" + date + " All Machines Knitting MCs Fault Log.csv";
 
+        CIFSContext baseContext = SingletonContext.getInstance();
+        NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator("", smbUsername, smbPassword);
+        CIFSContext authContext = baseContext.withCredentials(auth);
 
-        String csvFile = "data/" + date + " All Machines Knitting MCs Fault Log.csv";
+        try {
+            SmbFile smbFile = new SmbFile(csvFile, authContext);
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(new SmbFileInputStream(smbFile), StandardCharsets.UTF_16))) {
+                br.readLine(); // Skip header lines
+                br.readLine();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] columns = line.split(delimiter);
+                    int machineNo = Integer.parseInt(columns[6].trim());
+                    if (!String.valueOf(machineNo).equals(machineNumber)) {
+                        continue; // Skip records that don't match the given machine number
+                    }
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_16))) {
-            br.readLine(); // Skip header lines
-            br.readLine();
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] columns = line.split(delimiter);
-                int machineNo = Integer.parseInt(columns[6].trim());
-                if (!String.valueOf(machineNo).equals(machineNumber)) {
-                    continue; // Skip records that don't match the given machine number
+                    String fault = columns[2].trim(); // Assuming fault is in column 3 (index 2)
+                    String faultTimeStr = columns[5].trim();
+                    Duration faultDuration = parseFaultTime(faultTimeStr);
+
+                    double faultHours = faultDuration.toMinutes() / 60.0;
+                    faultHours = roundToOneDecimalPlace(faultHours);
+
+                    faultDownTime.put(fault, faultDownTime.getOrDefault(fault, 0.0) + faultHours);
+                    faultCount.put(fault, faultCount.getOrDefault(fault, 0.0) + 1);
+                    totalFaults++;
                 }
 
-                String fault = columns[2].trim(); // Assuming fault is in column 3 (index 2)
-                String faultTimeStr = columns[5].trim();
-                Duration faultDuration = parseFaultTime(faultTimeStr);
+                double totalDownTime = faultDownTime.values().stream().mapToDouble(Double::doubleValue).sum();
 
-                double faultHours = faultDuration.toMinutes() / 60.0;
+                for (Map.Entry<String, Double> entry : faultDownTime.entrySet()) {
+                    String fault = entry.getKey();
+                    double downTime = entry.getValue();
+                    double downTimePercentage = downTime / totalDownTime * 100;
+                    downTimePercentage = roundToOneDecimalPlace(downTimePercentage);
+                    faultTimePercentage.put(fault, downTimePercentage);
 
-                // Round faultHours to 1 decimal place
-                faultHours = roundToOneDecimalPlace(faultHours);
+                    double count = faultCount.get(fault);
+                    double countPercentage = count / totalFaults * 100;
+                    countPercentage = roundToOneDecimalPlace(countPercentage);
+                    faultCountPercentage.put(fault, countPercentage);
+                }
 
-                faultDownTime.put(fault, faultDownTime.getOrDefault(fault, 0.0) + faultHours);
-                faultCount.put(fault, faultCount.getOrDefault(fault, 0.0) + 1);
-                totalFaults++;
+                List<Map<String, Object>> faultReport = new ArrayList<>();
+                for (String fault : faultDownTime.keySet()) {
+                    Map<String, Object> faultRow = new LinkedHashMap<>();
+                    faultRow.put("Fault", fault);
+                    faultRow.put("Number of Faults", faultCount.get(fault));
+                    faultRow.put("percentage / count", faultCountPercentage.get(fault));
+                    faultRow.put("Fault Down Time", faultDownTime.get(fault));
+                    faultRow.put("percentage / time", faultTimePercentage.get(fault));
+                    faultReport.add(faultRow);
+                }
+
+                response.put("machineNumber", machineNumber);
+                response.put("totalDownTime", totalDownTime);
+                response.put("faultReport", faultReport);
+
             }
-
-            double totalDownTime = faultDownTime.values().stream().mapToDouble(Double::doubleValue).sum();
-
-            for (Map.Entry<String, Double> entry : faultDownTime.entrySet()) {
-                String fault = entry.getKey();
-                double downTime = entry.getValue();
-                double downTimePercentage = downTime / totalDownTime * 100;
-
-                // Round downTimePercentage to 1 decimal place
-                downTimePercentage = roundToOneDecimalPlace(downTimePercentage);
-
-                faultTimePercentage.put(fault, downTimePercentage);
-
-                double count = faultCount.get(fault);
-                double countPercentage = count / totalFaults * 100;
-
-                // Round countPercentage to 1 decimal place
-                countPercentage = roundToOneDecimalPlace(countPercentage);
-
-                faultCountPercentage.put(fault, countPercentage);
-            }
-
-            List<Map<String, Object>> faultReport = new ArrayList<>();
-            for (String fault : faultDownTime.keySet()) {
-                Map<String, Object> faultRow = new LinkedHashMap<>(); // Using LinkedHashMap to maintain insertion order
-
-                faultRow.put("Fault", fault);
-                faultRow.put("Number of Faults", faultCount.get(fault));
-                faultRow.put("percentage / count", faultCountPercentage.get(fault));
-                faultRow.put("Fault Down Time", faultDownTime.get(fault));
-                faultRow.put("percentage / time", faultTimePercentage.get(fault));
-
-                faultReport.add(faultRow);
-            }
-
-            response.put("machineNumber", machineNumber);
-            response.put("totalDownTime", totalDownTime);
-            response.put("faultReport", faultReport);
-
         } catch (IOException e) {
-            // Return a consistent structure with error message
             response.put("error", "Error reading CSV file: " + e.getMessage());
-            response.put("downTime", new HashMap<>()); // Provide empty downTime structure
-            response.put("totalDownTime", 0.0); // Provide default value
+            response.put("downTime", new HashMap<>());
+            response.put("totalDownTime", 0.0);
         }
 
         return response;
     }
+
 
     // Helper method to round a double to 1 decimal place
     private double roundToOneDecimalPlace(double value) {

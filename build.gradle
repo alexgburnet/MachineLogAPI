@@ -24,6 +24,20 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// Define the copyJar task
+task copyJar(type: Copy) {
+    from tasks.named('jar').get().archiveFile
+    into '/Users/alexburnet/Code/ABurnet/factory-dashboard/MachineLogAPI'
+    doLast {
+        println "Copied jar to: ${destinationDir}"
+    }
+}
+
+
+// Ensure the copyJar task runs after the jar task and before the build task
+copyJar.mustRunAfter tasks.named('jar')
+build.dependsOn(copyJar)
+
 tasks.named('test') {
     useJUnitPlatform()
 }
