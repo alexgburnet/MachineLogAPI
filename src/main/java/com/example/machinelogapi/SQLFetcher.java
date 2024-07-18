@@ -105,4 +105,65 @@ public class SQLFetcher {
         return response;
     }
 
+    public Map<String, Object> getMachineCardData(String machineNumber, String date) {
+        Map<String, Object> response = new HashMap<>();
+        Map<String, Double> faultDownTime = new HashMap<>();
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "SELECT\n" +
+                    "    fc.code AS fault_code,\n" +
+                    "    fc.description AS fault_description,\n" +
+                    "    SUM(f.fault_time) AS total_fault_time\n" +
+                    "FROM\n" +
+                    "    faults f\n" +
+                    "JOIN\n" +
+                    "    fault_codes fc ON f.fault_code = fc.code\n" +
+                    "JOIN\n" +
+                    "    operators o ON f.operator_code = o.code\n" +
+                    "WHERE\n" +
+                    "    f.machine_number = ?\n" +
+                    "    AND date >= ?::timestamp AND date < ?::timestamp\n" +
+                    "GROUP BY\n" +
+                    "    fc.code, fc.description;";
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setTimestamp(2, Timestamp.valueOf(date + " 00:00:00"));
+                pstmt.setTimestamp(3, Timestamp.valueOf(date + " 23:59:59"));
+                pstmt.setInt(1, Integer.parseInt(machineNumber));
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    double totalFaultTime = 0;
+                    while (rs.next()) {
+
+                        String fault = rs.getString(2);
+                        System.out.println(fault);
+                        String faultTimeString = rs.getString(3); // Assuming SUM(fault_time) returns hh:mm:ss
+                        System.out.println(faultTimeString);
+                        String parts[] = faultTimeString.split(":");
+                        long hours = Integer.parseInt(parts[0]);
+                        long minutes = Integer.parseInt(parts[1]);
+                        long seconds = Integer.parseInt(parts[2]);
+
+                        // Calculate total fault time in seconds
+                        double faultTimeHours = hours + (double) minutes / 60 + (double) seconds / 3600;
+                        System.out.println(faultTimeHours);
+
+                        faultDownTime.put(fault, faultTimeHours);
+                        totalFaultTime += faultTimeHours;
+                    }
+
+                    response.put("machineNumber", machineNumber);
+                    response.put("downTime", faultDownTime);
+                    response.put("totalDownTime", totalFaultTime);
+
+                }
+            }
+
+        } catch (SQLException e) {
+            response.put("error", "Failed to connect to the database");
+            e.printStackTrace();
+        }
+        return response;
+    }
+
 }

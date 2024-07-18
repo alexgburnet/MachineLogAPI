@@ -25,7 +25,7 @@ public class DataController {
 
     @GetMapping("/machineCard")
     public Map<String, Object> getMachineCard (@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
-        return parser.getMachineCardData(machineNumber, date);
+        return fetcher.getMachineCardData(machineNumber, date);
         // http://localhost:8080/api/machine?machineNumber=3
     }
 
