@@ -19,13 +19,13 @@ public class DataController {
     SQLFetcher fetcher = new SQLFetcher();
 
     @GetMapping("/overview")
-    public Map<String, Object> getOverview(@RequestParam(required = true) String date) {
-        return fetcher.getOverviewData(date);
+    public Map<String, Object> getOverview(@RequestParam(required = true) String date, @RequestParam(required = true) String shift) {
+        return fetcher.getOverviewData(date, shift);
     }
 
     @GetMapping("/machineCard")
-    public Map<String, Object> getMachineCard (@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
-        return fetcher.getMachineCardData(machineNumber, date);
+    public Map<String, Object> getMachineCard (@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date, @RequestParam(required = true) String shift) {
+        return fetcher.getMachineCardData(machineNumber, date, shift);
         // http://localhost:8080/api/machine?machineNumber=3
     }
 
@@ -35,12 +35,12 @@ public class DataController {
     }
 
     @GetMapping("/faultLog")
-    public Map<String, Object> getFaultLog(@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
-        return fetcher.getFaultLog(machineNumber, date);
+    public Map<String, Object> getFaultLog(@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date, @RequestParam(required = true) String shift) {
+        return fetcher.getFaultLog(machineNumber, date, shift);
     }
 
     @GetMapping("/faultReport")
-    public Map<String, Object> getFaultReport(@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
-        return parser.getFaultReport(machineNumber, "16.7.24");
+    public Map<String, Object> getFaultReport(@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date, @RequestParam(required = true) String shift) {
+        return fetcher.getFaultReport(machineNumber, date, shift);
     }
 }

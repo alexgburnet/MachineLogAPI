@@ -1,6 +1,8 @@
 package com.example.machinelogapi;
 
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.*;
 import java.sql.*;
 import java.time.Duration;
@@ -42,7 +44,22 @@ public class SQLFetcher {
         }
     }
 
-    public Map<String, Object> getOverviewData(String date) {
+    public Map<String, Object> getOverviewData(String date, String shift) {
+
+        Timestamp start;
+        Timestamp end;
+        double shiftHours;
+
+        if (shift.equals("day")) {
+            start = Timestamp.valueOf(date + " 00:06:00");
+            end = Timestamp.valueOf(date + " 17:30:00");
+            shiftHours = 11.5;
+        } else {
+            start = Timestamp.valueOf(date + " 17:30:00");
+            end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            shiftHours = 12.5;
+        }
+
         Map<String, Object> response = new HashMap<>();
         Map<Integer, Double> machinePercentRun = new HashMap<>();
         int totalMachines = 0; // To count total machines for average calculation
@@ -51,8 +68,8 @@ public class SQLFetcher {
             String sql = "SELECT machine_number, SUM(fault_time) FROM faults WHERE date >= ?::timestamp AND date < ?::timestamp GROUP BY machine_number";
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-                pstmt.setTimestamp(1, Timestamp.valueOf(date + " 00:00:00"));
-                pstmt.setTimestamp(2, Timestamp.valueOf(date + " 23:59:59"));
+                pstmt.setTimestamp(1, start);
+                pstmt.setTimestamp(2, end);
 
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
@@ -69,7 +86,7 @@ public class SQLFetcher {
                         long faultTimeSeconds = hours * 3600 + minutes * 60 + seconds;
 
                         // Calculate percent running time
-                        double percentRunning = ((24.0 * 3600 - faultTimeSeconds) / (24.0 * 3600)) * 100.0;
+                        double percentRunning = ((shiftHours * 3600 - faultTimeSeconds) / (shiftHours * 3600)) * 100.0;
                         machinePercentRun.put(machineNumber, percentRunning);
 
                         totalMachines++;
@@ -103,9 +120,23 @@ public class SQLFetcher {
         return response;
     }
 
-    public Map<String, Object> getMachineCardData(String machineNumber, String date) {
+    public Map<String, Object> getMachineCardData(String machineNumber, String date, String shift) {
         Map<String, Object> response = new HashMap<>();
         Map<String, Double> faultDownTime = new HashMap<>();
+
+        Timestamp start;
+        Timestamp end;
+        double shiftHours;
+
+        if (shift.equals("day")) {
+            start = Timestamp.valueOf(date + " 00:06:00");
+            end = Timestamp.valueOf(date + " 17:30:00");
+            shiftHours = 11.5;
+        } else {
+            start = Timestamp.valueOf(date + " 17:30:00");
+            end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            shiftHours = 12.5;
+        }
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
             String sql = "SELECT\n" +
@@ -125,8 +156,8 @@ public class SQLFetcher {
                     "    fc.code, fc.description;";
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-                pstmt.setTimestamp(2, Timestamp.valueOf(date + " 00:00:00"));
-                pstmt.setTimestamp(3, Timestamp.valueOf(date + " 23:59:59"));
+                pstmt.setTimestamp(2, start);
+                pstmt.setTimestamp(3, end);
                 pstmt.setInt(1, Integer.parseInt(machineNumber));
 
                 try (ResultSet rs = pstmt.executeQuery()) {
@@ -134,9 +165,7 @@ public class SQLFetcher {
                     while (rs.next()) {
 
                         String fault = rs.getString(2);
-                        System.out.println(fault);
                         String faultTimeString = rs.getString(3); // Assuming SUM(fault_time) returns hh:mm:ss
-                        System.out.println(faultTimeString);
                         String parts[] = faultTimeString.split(":");
                         long hours = Integer.parseInt(parts[0]);
                         long minutes = Integer.parseInt(parts[1]);
@@ -144,7 +173,6 @@ public class SQLFetcher {
 
                         // Calculate total fault time in seconds
                         double faultTimeHours = hours + (double) minutes / 60 + (double) seconds / 3600;
-                        System.out.println(faultTimeHours);
 
                         faultDownTime.put(fault, faultTimeHours);
                         totalFaultTime += faultTimeHours;
@@ -164,9 +192,23 @@ public class SQLFetcher {
         return response;
     }
 
-    public Map<String, Object> getFaultLog(String machineNumber, String date) {
+    public Map<String, Object> getFaultLog(String machineNumber, String date, String shift) {
         Map<String, Object> response = new HashMap<>();
         List<Map<String, Object>> faultLog = new ArrayList<>();
+
+        Timestamp start;
+        Timestamp end;
+        double shiftHours;
+
+        if (shift.equals("day")) {
+            start = Timestamp.valueOf(date + " 00:06:00");
+            end = Timestamp.valueOf(date + " 17:30:00");
+            shiftHours = 11.5;
+        } else {
+            start = Timestamp.valueOf(date + " 17:30:00");
+            end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            shiftHours = 12.5;
+        }
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
             String sql = "SELECT date, fc.description AS Fault, o.name AS Operator, fault_time FROM faults f JOIN fault_codes fc ON f.fault_code = fc.code JOIN operators o ON f.operator_code = o.code WHERE machine_number = ? AND date >= ?::timestamp AND date < ?::timestamp ORDER BY date;";
@@ -174,8 +216,8 @@ public class SQLFetcher {
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
                 pstmt.setInt(1, Integer.parseInt(machineNumber));
-                pstmt.setTimestamp(2, Timestamp.valueOf(date + " 00:00:00"));
-                pstmt.setTimestamp(3, Timestamp.valueOf(date + " 23:59:59"));
+                pstmt.setTimestamp(2, start);
+                pstmt.setTimestamp(3, end);
 
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
@@ -203,5 +245,99 @@ public class SQLFetcher {
 
         return response;
     }
+
+    public Map<String, Object> getFaultReport(String machineNumber, String date, String shift) {
+        Map<String, Object> response = new HashMap<>();
+        Map<String, Double> faultDownTime = new HashMap<>();
+        Map<String, Double> faultTimePercentage = new HashMap<>();
+        Map<String, Double> faultCount = new HashMap<>();
+        Map<String, Double> faultCountPercentage = new HashMap<>();
+        int totalFaults = 0;
+
+        Timestamp start;
+        Timestamp end;
+        double shiftHours;
+
+        if (shift.equals("day")) {
+            start = Timestamp.valueOf(date + " 00:06:00");
+            end = Timestamp.valueOf(date + " 17:30:00");
+            shiftHours = 11.5;
+        } else {
+            start = Timestamp.valueOf(date + " 17:30:00");
+            end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            shiftHours = 12.5;
+        }
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "SELECT fc.description AS Fault, SUM(f.fault_time) AS Fault_Down_Time, COUNT(f.fault_code) AS Fault_Count FROM faults f JOIN fault_codes fc ON f.fault_code = fc.code WHERE machine_number = ? AND date >= ?::timestamp AND date < ?::timestamp GROUP BY fc.description;";
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setInt(1, Integer.parseInt(machineNumber));
+                pstmt.setTimestamp(2, start);
+                pstmt.setTimestamp(3, end);
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        String fault = rs.getString(1);
+                        String faultTimeString = rs.getString(2); // Assuming SUM(fault_time) returns hh:mm:ss
+                        String parts[] = faultTimeString.split(":");
+                        long hours = Integer.parseInt(parts[0]);
+                        long minutes = Integer.parseInt(parts[1]);
+                        long seconds = Integer.parseInt(parts[2]);
+
+                        // Calculate total fault time in hours
+                        double faultHours = hours + (double) minutes / 60 + (double) seconds / 3600;
+
+                        faultDownTime.put(fault, faultDownTime.getOrDefault(fault, 0.0) + faultHours);
+                        faultCount.put(fault, faultCount.getOrDefault(fault, 0.0) + 1);
+                        totalFaults++;
+                    }
+
+                    double totalDownTime = faultDownTime.values().stream().mapToDouble(Double::doubleValue).sum();
+
+                    for (Map.Entry<String, Double> entry : faultDownTime.entrySet()) {
+                        String fault = entry.getKey();
+                        double downTime = entry.getValue();
+                        double downTimePercentage = downTime / totalDownTime * 100;
+                        downTimePercentage = roundToOneDecimalPlace(downTimePercentage);
+                        faultTimePercentage.put(fault, downTimePercentage);
+
+                        double count = faultCount.get(fault);
+                        double countPercentage = count / totalFaults * 100;
+                        countPercentage = roundToOneDecimalPlace(countPercentage);
+                        faultCountPercentage.put(fault, countPercentage);
+                    }
+
+                    List<Map<String, Object>> faultReport = new ArrayList<>();
+                    for (String fault : faultDownTime.keySet()) {
+                        Map<String, Object> faultRow = new LinkedHashMap<>();
+                        faultRow.put("Fault", fault);
+                        faultRow.put("Number of Faults", faultCount.get(fault));
+                        faultRow.put("percentage / count", faultCountPercentage.get(fault));
+                        faultRow.put("Fault Down Time", faultDownTime.get(fault));
+                        faultRow.put("percentage / time", faultTimePercentage.get(fault));
+                        faultReport.add(faultRow);
+                    }
+
+                    response.put("machineNumber", machineNumber);
+                    response.put("totalDownTime", totalDownTime);
+                    response.put("faultReport", faultReport);
+                }
+            }
+
+        } catch (SQLException e) {
+            response.put("error", "Failed to connect to the database");
+            e.printStackTrace();
+        }
+
+        return response;
+    }
+
+    private double roundToOneDecimalPlace(double value) {
+        BigDecimal bd = BigDecimal.valueOf(value);
+        bd = bd.setScale(1, RoundingMode.HALF_UP);
+        return bd.doubleValue();
+    }
+
 
 }
