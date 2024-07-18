@@ -1,0 +1,108 @@
+package com.example.machinelogapi;
+
+import java.io.*;
+import java.nio.file.*;
+import java.sql.*;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+public class SQLFetcher {
+    String dbURL = "jdbc:postgresql://10.0.0.85:5432/fault_log";
+
+    String username;
+    String password;
+
+    Connection con;
+
+    SQLFetcher() {
+
+        try {
+            // Load the properties file
+
+            Properties props = new Properties();
+            props.load(new FileInputStream("config/config.properties"));
+            // username = props.getProperty("psql.username");
+            //String password = props.getProperty("psql.password");
+
+            username = "REDACTED";
+            password = "REDACTED";
+
+            Class.forName("org.postgresql.Driver");
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Map<String, Object> getOverviewData(String date) {
+        Map<String, Object> response = new HashMap<>();
+        Map<Integer, Double> machinePercentRun = new HashMap<>();
+        int totalMachines = 0; // To count total machines for average calculation
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "SELECT machine_number, SUM(fault_time) FROM faults WHERE date >= ?::timestamp AND date < ?::timestamp GROUP BY machine_number";
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setTimestamp(1, Timestamp.valueOf(date + " 00:00:00"));
+                pstmt.setTimestamp(2, Timestamp.valueOf(date + " 23:59:59"));
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        int machineNumber = rs.getInt(1);
+                        String faultTimeString = rs.getString(2); // Assuming SUM(fault_time) returns hh:mm:ss
+
+                        // Parse fault time string into hours, minutes, seconds
+                        String[] parts = faultTimeString.split(":");
+                        int hours = Integer.parseInt(parts[0]);
+                        int minutes = Integer.parseInt(parts[1]);
+                        int seconds = Integer.parseInt(parts[2]);
+
+                        // Calculate total fault time in seconds
+                        long faultTimeSeconds = hours * 3600 + minutes * 60 + seconds;
+
+                        // Calculate percent running time
+                        double percentRunning = ((24.0 * 3600 - faultTimeSeconds) / (24.0 * 3600)) * 100.0;
+                        machinePercentRun.put(machineNumber, percentRunning);
+
+                        totalMachines++;
+                    }
+                }
+
+                // Construct response map
+                int[] machineNumbers = new int[totalMachines];
+                double[] percentRun = new double[totalMachines];
+                int index = 0;
+                for (Map.Entry<Integer, Double> entry : machinePercentRun.entrySet()) {
+                    machineNumbers[index] = entry.getKey();
+                    percentRun[index] = entry.getValue();
+                    index++;
+                }
+
+                Map<String, Object> machinesMap = new HashMap<>();
+                machinesMap.put("numbers", machineNumbers);
+                machinesMap.put("percentRun", percentRun);
+
+                response.put("machines", machinesMap);
+            } catch (SQLException e) {
+                response.put("error", "Failed to execute query");
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            response.put("error", "Failed to connect to the database");
+            e.printStackTrace();
+        }
+
+        return response;
+    }
+
+}

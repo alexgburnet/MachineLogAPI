@@ -16,10 +16,11 @@ import java.util.Map;
 public class DataController {
 
     CSVParser parser = new CSVParser();
+    SQLFetcher fetcher = new SQLFetcher();
 
     @GetMapping("/overview")
     public Map<String, Object> getOverview(@RequestParam(required = true) String date) {
-        return parser.getOverviewData(date);
+        return fetcher.getOverviewData(date);
     }
 
     @GetMapping("/machineCard")
