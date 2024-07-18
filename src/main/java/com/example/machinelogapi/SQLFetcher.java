@@ -7,9 +7,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -163,6 +161,46 @@ public class SQLFetcher {
             response.put("error", "Failed to connect to the database");
             e.printStackTrace();
         }
+        return response;
+    }
+
+    public Map<String, Object> getFaultLog(String machineNumber, String date) {
+        Map<String, Object> response = new HashMap<>();
+        List<Map<String, Object>> faultLog = new ArrayList<>();
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "SELECT date, fc.description AS Fault, o.name AS Operator, fault_time FROM faults f JOIN fault_codes fc ON f.fault_code = fc.code JOIN operators o ON f.operator_code = o.code WHERE machine_number = ? AND date >= ?::timestamp AND date < ?::timestamp ORDER BY date;";
+
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setInt(1, Integer.parseInt(machineNumber));
+                pstmt.setTimestamp(2, Timestamp.valueOf(date + " 00:00:00"));
+                pstmt.setTimestamp(3, Timestamp.valueOf(date + " 23:59:59"));
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        Map<String, Object> faultData = new HashMap<>();
+                        faultData.put("Date", rs.getTimestamp(1).toString());
+                        faultData.put("Fault", rs.getString(2));
+                        faultData.put("Fault Time", rs.getString(4));
+                        faultData.put("Operator", rs.getString(3));
+
+                        faultLog.add(faultData);
+                    }
+
+                    String[] headers = {"Date", "Fault", "Fault Time", "Operator"};
+
+                    response.put("machineNumber", machineNumber);
+                    response.put("faultLog", faultLog);
+                    response.put("headers", headers);
+                }
+            }
+
+        } catch (SQLException e) {
+            response.put("error", "Failed to connect to the database");
+            e.printStackTrace();
+        }
+
         return response;
     }
 

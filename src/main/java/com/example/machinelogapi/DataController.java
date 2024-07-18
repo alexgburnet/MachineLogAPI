@@ -36,11 +36,11 @@ public class DataController {
 
     @GetMapping("/faultLog")
     public Map<String, Object> getFaultLog(@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
-        return parser.getFaultLog(machineNumber, date);
+        return fetcher.getFaultLog(machineNumber, date);
     }
 
     @GetMapping("/faultReport")
     public Map<String, Object> getFaultReport(@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date) {
-        return parser.getFaultReport(machineNumber, date);
+        return parser.getFaultReport(machineNumber, "16.7.24");
     }
 }
