@@ -16,6 +16,10 @@ import jcifs.smb.SmbFileInputStream;
 import jcifs.context.BaseContext;
 import jcifs.context.SingletonContext;
 
+import org.springframework.stereotype.Component;
+
+
+@Component
 public class CSVParser {
 
     String delimiter = ";";

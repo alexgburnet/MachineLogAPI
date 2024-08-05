@@ -13,6 +13,11 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+
+import org.springframework.stereotype.Component;
+
+
+@Component
 public class SQLFetcher {
     String dbURL = "jdbc:postgresql://10.0.0.85:5432/fault_log";
 
@@ -28,11 +33,8 @@ public class SQLFetcher {
 
             Properties props = new Properties();
             props.load(new FileInputStream("config/config.properties"));
-            // username = props.getProperty("psql.username");
-            //String password = props.getProperty("psql.password");
-
-            username = "REDACTED";
-            password = "REDACTED";
+            username = props.getProperty("psql.username");
+            password = props.getProperty("psql.password");
 
             Class.forName("org.postgresql.Driver");
 
