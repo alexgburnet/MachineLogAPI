@@ -1,3 +1,10 @@
+/**
+ *  This class is the service class for the API
+ *   It fetches the data from the database and returns it to the controller.
+ *   The methods in this class are annotated with @Async to make them asynchronous.
+ *
+ */
+
 package com.example.machinelogapi;
 
 import org.springframework.scheduling.annotation.Async;
@@ -9,57 +16,50 @@ import java.util.concurrent.CompletableFuture;
 
 @Service
 public class DataService {
+    private SQLManager sqlmanager = new SQLManager();
 
-    private CSVParser parser = new CSVParser();
-    private SQLFetcher fetcher = new SQLFetcher();
-    private SQLPoster poster = new SQLPoster();
-
-
-    public DataService(CSVParser parser, SQLFetcher fetcher, SQLPoster poster) {
-        this.parser = parser;
-        this.fetcher = fetcher;
-        this.poster = poster;
-
+    public DataService(SQLManager sqlmanager) {
+        this.sqlmanager = sqlmanager;
     }
 
     @Async
     public CompletableFuture<Map<String, Object>> getOverviewData(String date, String shift) {
-        return CompletableFuture.completedFuture(fetcher.getOverviewData(date, shift));
+        return CompletableFuture.completedFuture(sqlmanager.getOverviewData(date, shift));
     }
 
     @Async
     public CompletableFuture<Map<String, Object>> getMachineCardData(String machineNumber, String date, String shift) {
-        return CompletableFuture.completedFuture(fetcher.getMachineCardData(machineNumber, date, shift));
+        return CompletableFuture.completedFuture(sqlmanager.getMachineCardData(machineNumber, date, shift));
     }
 
     @Async
     public CompletableFuture<int[]> getMachineNumbers() {
-        return CompletableFuture.completedFuture(parser.getMachineNumbers());
+        return CompletableFuture.completedFuture(sqlmanager.getMachineNumbers());
     }
 
     @Async
     public CompletableFuture<Map<String, Object>> getFaultLog(String machineNumber, String date, String shift) {
-        return CompletableFuture.completedFuture(fetcher.getFaultLog(machineNumber, date, shift));
+        return CompletableFuture.completedFuture(sqlmanager.getFaultLog(machineNumber, date, shift));
     }
 
     @Async
     public CompletableFuture<Map<String, Object>> getFaultReport(String machineNumber, String date, String shift) {
-        return CompletableFuture.completedFuture(fetcher.getFaultReport(machineNumber, date, shift));
+        return CompletableFuture.completedFuture(sqlmanager.getFaultReport(machineNumber, date, shift));
     }
 
     @Async
     public CompletableFuture<Map<Integer, String>> getOperators() {
-        return CompletableFuture.completedFuture(fetcher.getOperators());
+        return CompletableFuture.completedFuture(sqlmanager.getOperators());
     }
 
     @Async
     public CompletableFuture<Map<Integer, String>> checkAccountableKnitter(String date, String shift, List<Integer> machines) {
-        return CompletableFuture.completedFuture(fetcher.checkAccountableKnitter(date, shift, machines));
+        return CompletableFuture.completedFuture(sqlmanager.checkAccountableKnitter(date, shift, machines));
     }
 
     @Async
     public CompletableFuture<Void> setAccountableKnitter(Integer Operator, String date, String shift, List<Integer> Machines) {
-        fetcher.SetAccountableKnitter(Operator, date, shift, Machines);
+        sqlmanager.SetAccountableKnitter(Operator, date, shift, Machines);
         return CompletableFuture.completedFuture(null);
     }
 }

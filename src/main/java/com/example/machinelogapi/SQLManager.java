@@ -1,41 +1,41 @@
+/**
+ *  This class is what interacts with the PostgreSQL database.
+ *   It contains methods to get data from the database and return it to the DataService class.
+ *   The methods in this class are annotated with @Component to make it a Spring bean.
+ *   Username and password are loaded from a properties file.
+ */
+
 package com.example.machinelogapi;
 
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.file.*;
 import java.sql.*;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 
 import org.springframework.stereotype.Component;
 
 
 @Component
-public class SQLFetcher {
+public class SQLManager {
     String dbURL = "jdbc:postgresql://10.0.0.85:5432/fault_log";
 
     String username;
     String password;
 
-    Connection con;
-
-    SQLFetcher() {
+    SQLManager() {
 
         try {
-            // Load the properties file
-
+            // Load username and password from properties file
             Properties props = new Properties();
             props.load(new FileInputStream("config.properties"));
             username = props.getProperty("psql.username");
             password = props.getProperty("psql.password");
 
+            // Load PostgreSQL driver
             Class.forName("org.postgresql.Driver");
 
 
@@ -46,12 +46,33 @@ public class SQLFetcher {
         }
     }
 
-    public Map<String, Object> getOverviewData(String date, String shift) {
+    public int[] getMachineNumbers() {
+        return new int[] {1, 2, 3, 17, 19, 26, 27, 28};
+    }
 
+    public Map<String, Object> getOverviewData(String date, String shift) {
+        /**
+         * This method returns an overview of data for a given shift
+         *
+         * @param date: The date in the format "yyyy-MM-dd"
+         *            Example: "2021-08-25"
+         *
+         * @param shift: The shift in the format "day" or "night"
+         *             Example: "day"
+         *
+         * @return A map containing the following keys:
+         *         - "machines": A map containing the machine numbers and their percent running time
+         *         Example: { "machines": { "numbers": [1, 2, 3], "percentRun": [90.0, 80.0, 70.0] } }
+         *         - "error": An error message if an error occurred
+         *         Example: { "error": "Failed to connect to the database" }
+         *
+         */
         Timestamp start;
         Timestamp end;
         double shiftHours;
 
+        // Day shift starts at 00:06:00 and ends at 17:30:00
+        // Night shift starts at 17:30:00 and ends at 00:06:00 the next day
         if (shift.equals("day")) {
             start = Timestamp.valueOf(date + " 00:06:00");
             end = Timestamp.valueOf(date + " 17:30:00");
@@ -123,6 +144,24 @@ public class SQLFetcher {
     }
 
     public Map<String, Object> getMachineCardData(String machineNumber, String date, String shift) {
+        /**
+         * This method returns data for a machine card for a given shift
+         *
+         * @param machineNumber: The machine number
+         *                     Example: "3"
+         *
+         * @param date: The date in the format "yyyy-MM-dd"
+         *            Example: "2021-08-25"
+         *
+         * @param shift: The shift in the format "day" or "night"
+         *             Example: "day"
+         *
+         * @return A map containing the following
+         *        - "machineNumber": The machine number
+         *        - "downTime": A map containing the fault codes and their down time
+         *        - "totalDownTime": The total down time for the machine
+         *        - "error": An error message if an error occurred
+         */
         Map<String, Object> response = new HashMap<>();
         Map<String, Double> faultDownTime = new HashMap<>();
 
@@ -183,6 +222,7 @@ public class SQLFetcher {
                     response.put("machineNumber", machineNumber);
                     response.put("downTime", faultDownTime);
                     response.put("totalDownTime", totalFaultTime);
+                    response.put("shiftHours", shiftHours);
 
                 }
             }
@@ -195,6 +235,25 @@ public class SQLFetcher {
     }
 
     public Map<String, Object> getFaultLog(String machineNumber, String date, String shift) {
+        /**
+         * This method returns the fault log for a given machine number, date, and shift
+         * Almost exactly how it is displayed in the database
+         *
+         * @param machineNumber: The machine number
+         *                     Example: "3"
+         *
+         * @param date: The date in the format "yyyy-MM-dd"
+         *            Example: "2021-08-25"
+         *
+         * @param shift: The shift in the format "day" or "night"
+         *             Example: "day"
+         *
+         * @return A map containing the following
+         *       - "machineNumber": The machine number
+         *       - "faultLog": A list of maps containing the fault log data
+         *       - "headers": An array of headers for the fault log
+         *       - "error": An error message if an error occurred
+         */
         Map<String, Object> response = new HashMap<>();
         List<Map<String, Object>> faultLog = new ArrayList<>();
 
@@ -245,10 +304,33 @@ public class SQLFetcher {
             e.printStackTrace();
         }
 
+        if (response.isEmpty()) {
+            response.put("error", "No data found");
+        }
+
         return response;
     }
 
     public Map<String, Object> getFaultReport(String machineNumber, String date, String shift) {
+        /**
+         * This method returns a fault report for a given machine number, date, and shift
+         *
+         * @param machineNumber: The machine number
+         *                     Example: "3"
+         *
+         * @param date: The date in the format "yyyy-MM-dd"
+         *            Example: "2021-08-25"
+         *
+         * @param shift: The shift in the format "day" or "night"
+         *             Example: "day"
+         *
+         * @return A map containing the following
+         *        - "machineNumber": The machine number
+         *        - "totalDownTime": The total down time for the machine
+         *        - "faultReport": A list of maps containing the fault report data
+         *           Example: [ { "Fault": "Fault 1", "Number of Faults": 2, "percentage / count": 50.0, "Fault Down Time": 1.5, "percentage / time": 50.0 } ]
+         *        - "error": An error message if an error occurred
+         */
         Map<String, Object> response = new HashMap<>();
         Map<String, Double> faultDownTime = new HashMap<>();
         Map<String, Double> faultTimePercentage = new HashMap<>();
@@ -332,10 +414,17 @@ public class SQLFetcher {
             e.printStackTrace();
         }
 
+        if (response.isEmpty()) {
+            response.put("error", "No data found");
+        }
+
         return response;
     }
 
     public Map<Integer, String> getOperators() {
+        /**
+         * This method returns a list of operators
+         */
         Map<Integer, String> operators = new HashMap<>();
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
@@ -357,7 +446,20 @@ public class SQLFetcher {
     }
 
     public Map<Integer, String> checkAccountableKnitter(String date, String shift, List<Integer> machines) {
-
+        /**
+         * This method checks if an accountable knitter is assigned to a machine for a given date and shift
+         * If an accountable knitter is assigned, it returns the machine number and the knitter's name
+         * If no accountable knitter is assigned, it returns -1 and "Unassigned"
+         *
+         * @param date: The date in the format "yyyy-MM-dd"
+         *            Example: "2021-08-25"
+         *
+         * @param shift: The shift in the format "day" or "night"
+         *             Example: "day"
+         *
+         * @param machines: A list of machine numbers
+         *                Example: [1, 2, 3]
+         */
         Map<Integer, String> accountableKnitters = new HashMap<>();
 
         Timestamp dateTimestamp = Timestamp.valueOf(date + " 00:00:00");
@@ -386,7 +488,7 @@ public class SQLFetcher {
 
                 try (ResultSet rs = pstmt.executeQuery()) {
                     if (!rs.next()) {
-                        accountableKnitters.put(-1, "No accountable knitters found");
+                        accountableKnitters.put(-1, "Unassigned");
                         return accountableKnitters;
                     } else {
                         accountableKnitters.put(rs.getInt(1), rs.getString(2));
@@ -409,7 +511,22 @@ public class SQLFetcher {
     }
 
     public void SetAccountableKnitter(Integer operator, String date, String shift, List<Integer> machines) {
-
+        /**
+         * This method sets the accountable knitter for a given operator, date, shift, and list of machines
+         * If there is already an accountable knitter assigned to a machine, it will be replaced
+         *
+         * @param operator: The operator code
+         *                 Example: 1
+         *
+         * @param date: The date in the format "yyyy-MM-dd"
+         *            Example: "2021-08-25"
+         *
+         * @param shift: The shift in the format "day" or "night"
+         *             Example: "day"
+         *
+         * @param machines: A list of machine numbers
+         *                Example: [1, 2, 3]
+         */
         Timestamp dateTimestamp = Timestamp.valueOf(date + " 00:00:00");
 
 
@@ -440,8 +557,6 @@ public class SQLFetcher {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
-        return;
     }
 
 
