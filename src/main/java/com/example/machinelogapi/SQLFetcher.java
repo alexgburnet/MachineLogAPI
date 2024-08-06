@@ -362,10 +362,6 @@ public class SQLFetcher {
 
         Timestamp dateTimestamp = Timestamp.valueOf(date + " 00:00:00");
 
-        System.out.println("Date: " + dateTimestamp);
-        System.out.println("Shift: " + shift);
-        System.out.println("Machines: " + machines);
-
 
         StringJoiner joiner = new StringJoiner(",", "(", ")");
         for (Integer machine : machines) {
@@ -377,7 +373,6 @@ public class SQLFetcher {
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
 
             String sql = ("SELECT machine_number, name FROM accountable_knitter ak JOIN operators o ON o.code = ak.operator WHERE date = ?::timestamp AND shift = ? AND machine_number in " + inClause + ";");
-            System.out.println(sql);
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
                 pstmt.setTimestamp(1, dateTimestamp);
@@ -393,6 +388,8 @@ public class SQLFetcher {
                     if (!rs.next()) {
                         accountableKnitters.put(-1, "No accountable knitters found");
                         return accountableKnitters;
+                    } else {
+                        accountableKnitters.put(rs.getInt(1), rs.getString(2));
                     }
 
                     while (rs.next()) {
@@ -408,17 +405,41 @@ public class SQLFetcher {
         }
 
 
-        return null;
+        return accountableKnitters;
     }
 
     public void SetAccountableKnitter(Integer operator, String date, String shift, List<Integer> machines) {
 
         Timestamp dateTimestamp = Timestamp.valueOf(date + " 00:00:00");
 
-        System.out.println("Operator: " + operator);
-        System.out.println("Date: " + dateTimestamp);
-        System.out.println("Shift: " + shift);
-        System.out.println("Machines: " + machines);
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "DELETE FROM accountable_knitter WHERE date = ?::timestamp AND shift = ? AND machine_number = ?;";
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setTimestamp(1, dateTimestamp);
+                pstmt.setString(2, shift);
+
+                for (Integer machine : machines) {
+                    pstmt.setInt(3, machine);
+                    pstmt.executeUpdate();
+                }
+            }
+
+            sql = "INSERT INTO accountable_knitter (date, shift, machine_number, operator) VALUES (?::timestamp, ?, ?, ?);";
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setInt(4, operator);
+                pstmt.setTimestamp(1, dateTimestamp);
+                pstmt.setString(2, shift);
+
+                for (Integer machine : machines) {
+                    pstmt.setInt(3, machine);
+                    pstmt.executeUpdate();
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
 
         return;
     }

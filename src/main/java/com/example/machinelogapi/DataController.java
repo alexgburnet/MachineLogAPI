@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -60,9 +61,10 @@ public class DataController {
         Integer operator = Integer.valueOf(body.get("operator").toString());
         String date = body.get("date").toString();
         String shift = body.get("shift").toString();
-        List<Integer> machines = (List<Integer>) body.get("machines");
-
-        System.out.println(operator + " " + date + " " + shift + " " + machines);
+        List<?> machinesList = (List<?>) body.get("machines");
+        List<Integer> machines = machinesList.stream()
+                .map(obj -> Integer.valueOf(obj.toString()))
+                .collect(Collectors.toList());
 
         return dataService.setAccountableKnitter(operator, date, shift, machines);
     }
