@@ -44,7 +44,6 @@ public class DataController {
 
     @GetMapping("/machineCard")
     public CompletableFuture<Map<String, Object>> getMachineCard (@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date, @RequestParam(required = true) String shift) {
-
         /**
          * This method is used to get the machine card data for a given machine number, date, and shift.
          * @param machineNumber
