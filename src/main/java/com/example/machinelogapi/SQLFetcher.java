@@ -32,7 +32,7 @@ public class SQLFetcher {
             // Load the properties file
 
             Properties props = new Properties();
-            props.load(new FileInputStream("config/config.properties"));
+            props.load(new FileInputStream("config.properties"));
             username = props.getProperty("psql.username");
             password = props.getProperty("psql.password");
 
@@ -334,6 +334,95 @@ public class SQLFetcher {
 
         return response;
     }
+
+    public Map<Integer, String> getOperators() {
+        Map<Integer, String> operators = new HashMap<>();
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "SELECT code, name FROM operators;";
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        operators.put(rs.getInt(1), rs.getString(2));
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return operators;
+    }
+
+    public Map<Integer, String> checkAccountableKnitter(String date, String shift, List<Integer> machines) {
+
+        Map<Integer, String> accountableKnitters = new HashMap<>();
+
+        Timestamp dateTimestamp = Timestamp.valueOf(date + " 00:00:00");
+
+        System.out.println("Date: " + dateTimestamp);
+        System.out.println("Shift: " + shift);
+        System.out.println("Machines: " + machines);
+
+
+        StringJoiner joiner = new StringJoiner(",", "(", ")");
+        for (Integer machine : machines) {
+            joiner.add("?");
+        }
+
+        String inClause = joiner.toString();
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+
+            String sql = ("SELECT machine_number, name FROM accountable_knitter ak JOIN operators o ON o.code = ak.operator WHERE date = ?::timestamp AND shift = ? AND machine_number in " + inClause + ";");
+            System.out.println(sql);
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setTimestamp(1, dateTimestamp);
+                pstmt.setString(2, shift);
+
+                int index = 3;
+
+                for (int i = 0; i < machines.size(); i++) {
+                    pstmt.setInt(i + index, machines.get(i));
+                }
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (!rs.next()) {
+                        accountableKnitters.put(-1, "No accountable knitters found");
+                        return accountableKnitters;
+                    }
+
+                    while (rs.next()) {
+                        accountableKnitters.put(rs.getInt(1), rs.getString(2));
+                    }
+                }
+
+            }
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        return null;
+    }
+
+    public void SetAccountableKnitter(Integer operator, String date, String shift, List<Integer> machines) {
+
+        Timestamp dateTimestamp = Timestamp.valueOf(date + " 00:00:00");
+
+        System.out.println("Operator: " + operator);
+        System.out.println("Date: " + dateTimestamp);
+        System.out.println("Shift: " + shift);
+        System.out.println("Machines: " + machines);
+
+        return;
+    }
+
 
     private double roundToOneDecimalPlace(double value) {
         BigDecimal bd = BigDecimal.valueOf(value);

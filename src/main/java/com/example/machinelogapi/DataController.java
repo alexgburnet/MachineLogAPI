@@ -1,11 +1,7 @@
 package com.example.machinelogapi;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,5 +43,27 @@ public class DataController {
     @GetMapping("/faultReport")
     public CompletableFuture<Map<String, Object>> getFaultReport(@RequestParam(required = true) String machineNumber, @RequestParam(required = true) String date, @RequestParam(required = true) String shift) {
         return dataService.getFaultReport(machineNumber, date, shift);
+    }
+
+    @GetMapping("/operators")
+    public CompletableFuture<Map<Integer, String>> getOperators() {
+        return dataService.getOperators();
+    }
+
+    @GetMapping("/checkAccountableKnitter")
+    public CompletableFuture<Map<Integer, String>> checkAccountableKnitter(@RequestParam(required = true) String date, @RequestParam(required = true) String shift, @RequestParam(required = true) List<Integer> machines) {
+        return dataService.checkAccountableKnitter(date, shift, machines);
+    }
+
+    @PostMapping("/setAccountableKnitter")
+    public CompletableFuture<Void> setAccountableKnitter(@RequestBody Map<String, Object> body) {
+        Integer operator = Integer.valueOf(body.get("operator").toString());
+        String date = body.get("date").toString();
+        String shift = body.get("shift").toString();
+        List<Integer> machines = (List<Integer>) body.get("machines");
+
+        System.out.println(operator + " " + date + " " + shift + " " + machines);
+
+        return dataService.setAccountableKnitter(operator, date, shift, machines);
     }
 }

@@ -36,12 +36,9 @@ public class CSVParser {
 
     public CSVParser() {
         try {
-            props.load(new FileInputStream("config/config.properties"));
+            props.load(new FileInputStream("config.properties"));
             smbUsername = props.getProperty("smb.username");
             smbPassword = props.getProperty("smb.password");
-
-            psqlUsername = props.getProperty("psql.username");
-            psqlPassword = props.getProperty("psql.password");
         } catch (IOException e) {
             e.printStackTrace();
         }
