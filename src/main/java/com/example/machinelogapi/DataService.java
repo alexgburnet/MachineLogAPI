@@ -62,4 +62,34 @@ public class DataService {
         sqlmanager.SetAccountableKnitter(Operator, date, shift, Machines);
         return CompletableFuture.completedFuture(null);
     }
+
+    @Async
+    public CompletableFuture<Void> inputKnittingFaultLog(String data) {
+        sqlmanager.inputKnittingFaultLog(data);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
+    public CompletableFuture<Void> inputWarpingFaultLog(String data) {
+        sqlmanager.inputWarpingFaultLog(data);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
+    public CompletableFuture<Void> inputKnittingProductionLog(String data) {
+        sqlmanager.inputKnittingProductionLog(data);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
+    CompletableFuture<Void> inputWarpingProductionLog(String data) {
+        sqlmanager.inputWarpingProductionLog(data);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
+    CompletableFuture<Void> inputKnittingWarpRefLog(String data) {
+        sqlmanager.inputKnittingWarpRefLog(data);
+        return CompletableFuture.completedFuture(null);
+    }
 }

@@ -13,7 +13,6 @@ package com.example.machinelogapi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -145,5 +144,35 @@ public class DataController {
                 .collect(Collectors.toList());
 
         return dataService.setAccountableKnitter(operator, date, shift, machines);
+    }
+
+    @PostMapping("/InputKnittingFaultLog")
+    public CompletableFuture<Void> InputKnittingFaultLog(@RequestParam String data) {
+
+        return dataService.inputKnittingFaultLog(data);
+    }
+
+    @PostMapping("/InputWarpingFaultLog")
+    public CompletableFuture<Void> InputWarpingFaultLog(@RequestParam String data) {
+
+        return dataService.inputWarpingFaultLog(data);
+    }
+
+    @PostMapping("/InputKnittingProductionLog")
+    public CompletableFuture<Void> InputKnittingProductionLog(@RequestParam String data) {
+
+        return dataService.inputKnittingProductionLog(data);
+    }
+
+    @PostMapping("/InputWarpingProductionLog")
+    public CompletableFuture<Void> InputWarpingProductionLog(@RequestParam String data) {
+
+        return dataService.inputWarpingProductionLog(data);
+    }
+
+    @PostMapping("/InputKnittingWarpRefLog")
+    public CompletableFuture<Void> InputKnittingWarpRefLog(@RequestParam String data) {
+
+        return dataService.inputKnittingWarpRefLog(data);
     }
 }

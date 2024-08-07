@@ -97,7 +97,7 @@ public class SQLManager {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         int machineNumber = rs.getInt(1);
-                        String faultTimeString = rs.getString(2); // Assuming SUM(fault_time) returns hh:mm:ss
+                        String faultTimeString = rs.getString(2);
 
                         // Parse fault time string into hours, minutes, seconds
                         String[] parts = faultTimeString.split(":");
@@ -158,8 +158,8 @@ public class SQLManager {
          *
          * @return A map containing the following
          *        - "machineNumber": The machine number
-         *        - "downTime": A map containing the fault codes and their down time
-         *        - "totalDownTime": The total down time for the machine
+         *        - "downTime": A map containing the fault codes and their downtime
+         *        - "totalDownTime": The total downtime for the machine
          *        - "error": An error message if an error occurred
          */
         Map<String, Object> response = new HashMap<>();
@@ -567,4 +567,28 @@ public class SQLManager {
     }
 
 
+    public void inputKnittingFaultLog(String data) {
+        // TODO
+        System.out.println("Knitting Fault Log:" + data);
+    }
+
+    public void inputWarpingFaultLog(String data) {
+        // TODO
+        System.out.println("Warping Fault Log: " + data);
+    }
+
+    public void inputKnittingProductionLog(String data) {
+        // TODO
+        System.out.println("Knitting Production Log: " + data);
+    }
+
+    public void inputWarpingProductionLog(String data) {
+        // TODO
+        System.out.println("Warping Production Log: " + data);
+    }
+
+    public void inputKnittingWarpRefLog(String data) {
+        // TODO
+        System.out.println("Knitting Warp Ref Log: " + data);
+    }
 }
