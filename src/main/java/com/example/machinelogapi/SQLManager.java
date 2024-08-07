@@ -568,7 +568,43 @@ public class SQLManager {
 
 
     public void inputKnittingFaultLog(String data) {
-        // TODO
+        /**
+         * This method is used to input a knitting fault into the database
+         * The data is in the format "dd/MM/yyyy hh:mm:ss;fault_code;fault_description;operator_code;operator_name;fault_time;machine_number"
+         */
+
+        String[] parts = data.split(";");
+        String unformattedDate = parts[0];
+        Integer faultCode = Integer.parseInt(parts[1]);
+        Integer operatorNumber = Integer.parseInt(parts[3]);
+        String unformattedTime = parts[5];
+        Integer machineNumber = Integer.parseInt(parts[6]);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+        // Parse the string to a LocalDateTime object
+        LocalDateTime localDateTime = LocalDateTime.parse(unformattedDate, formatter);
+
+        // Convert LocalDateTime to Timestamp
+        Timestamp date = Timestamp.valueOf(localDateTime);
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "INSERT INTO faults (date, machine_number, fault_code, operator_code, fault_time) VALUES (?, ?, ?, ?, ?::interval);";
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setTimestamp(1, date);
+                pstmt.setInt(2, machineNumber);
+                pstmt.setInt(3, faultCode);
+                pstmt.setInt(4, operatorNumber);
+                pstmt.setString(5, unformattedTime);
+
+                pstmt.executeUpdate();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         System.out.println("Knitting Fault Log:" + data);
     }
 

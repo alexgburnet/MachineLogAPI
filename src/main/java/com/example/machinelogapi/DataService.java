@@ -1,6 +1,7 @@
 /**
  *  This class is the service class for the API
  *   It fetches the data from the database and returns it to the controller.
+ *   It also updates the database with new data, live from the machines.
  *   The methods in this class are annotated with @Async to make them asynchronous.
  *
  */
