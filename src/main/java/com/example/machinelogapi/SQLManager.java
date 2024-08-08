@@ -74,13 +74,19 @@ public class SQLManager {
         // Day shift starts at 00:06:00 and ends at 17:30:00
         // Night shift starts at 17:30:00 and ends at 00:06:00 the next day
         if (shift.equals("day")) {
-            start = Timestamp.valueOf(date + " 00:06:00");
+            start = Timestamp.valueOf(date + " 06:00:00");
             end = Timestamp.valueOf(date + " 17:30:00");
             shiftHours = 11.5;
         } else {
             start = Timestamp.valueOf(date + " 17:30:00");
             end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             shiftHours = 12.5;
+        }
+
+        // If we are currently in the shift, the shift hours should be calculated up to the current time
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        if (now.after(start) && now.before(end)) {
+            shiftHours = (now.getTime() - start.getTime()) / 3600000.0;
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -170,13 +176,19 @@ public class SQLManager {
         double shiftHours;
 
         if (shift.equals("day")) {
-            start = Timestamp.valueOf(date + " 00:06:00");
+            start = Timestamp.valueOf(date + " 06:00:00");
             end = Timestamp.valueOf(date + " 17:30:00");
             shiftHours = 11.5;
         } else {
             start = Timestamp.valueOf(date + " 17:30:00");
             end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             shiftHours = 12.5;
+        }
+
+        // If we are currently in the shift, the shift hours should be calculated up to the current time
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        if (now.after(start) && now.before(end)) {
+            shiftHours = (now.getTime() - start.getTime()) / 3600000.0;
         }
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
@@ -259,16 +271,13 @@ public class SQLManager {
 
         Timestamp start;
         Timestamp end;
-        double shiftHours;
 
         if (shift.equals("day")) {
             start = Timestamp.valueOf(date + " 00:06:00");
             end = Timestamp.valueOf(date + " 17:30:00");
-            shiftHours = 11.5;
         } else {
             start = Timestamp.valueOf(date + " 17:30:00");
             end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            shiftHours = 12.5;
         }
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
@@ -334,22 +343,19 @@ public class SQLManager {
         Map<String, Object> response = new HashMap<>();
         Map<String, Double> faultDownTime = new HashMap<>();
         Map<String, Double> faultTimePercentage = new HashMap<>();
-        Map<String, Double> faultCount = new HashMap<>();
+        Map<String, Integer> faultCount = new HashMap<>();
         Map<String, Double> faultCountPercentage = new HashMap<>();
         int totalFaults = 0;
 
         Timestamp start;
         Timestamp end;
-        double shiftHours;
 
         if (shift.equals("day")) {
             start = Timestamp.valueOf(date + " 00:06:00");
             end = Timestamp.valueOf(date + " 17:30:00");
-            shiftHours = 11.5;
         } else {
             start = Timestamp.valueOf(date + " 17:30:00");
             end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            shiftHours = 12.5;
         }
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
@@ -369,12 +375,12 @@ public class SQLManager {
                         long minutes = Integer.parseInt(parts[1]);
                         long seconds = Integer.parseInt(parts[2]);
 
-                        // Calculate total fault time in hours
-                        double faultHours = hours + (double) minutes / 60 + (double) seconds / 3600;
+                        // Calculate total fault time in hours, rounded to 1.d.p
+                        double faultHours = roundToOneDecimalPlace(hours + (double) minutes / 60 + (double) seconds / 3600);
 
                         faultDownTime.put(fault, faultDownTime.getOrDefault(fault, 0.0) + faultHours);
-                        faultCount.put(fault, faultCount.getOrDefault(fault, 0.0) + 1);
-                        totalFaults++;
+                        faultCount.put(fault, rs.getInt(3));
+                        totalFaults += rs.getInt(3);
                     }
 
                     double totalDownTime = faultDownTime.values().stream().mapToDouble(Double::doubleValue).sum();
