@@ -291,8 +291,15 @@ public class SQLManager {
 
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
+
+                        LocalDateTime localDateTime = rs.getTimestamp(1).toLocalDateTime();
+                        // Define the formatter
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        // Format the LocalDateTime to string
+                        String formattedDateTime = localDateTime.format(formatter);
+
                         Map<String, Object> faultData = new HashMap<>();
-                        faultData.put("Date", rs.getTimestamp(1).toString());
+                        faultData.put("Date", formattedDateTime);
                         faultData.put("Fault", rs.getString(2));
                         faultData.put("Fault Time", rs.getString(4));
                         faultData.put("Operator", rs.getString(3));
