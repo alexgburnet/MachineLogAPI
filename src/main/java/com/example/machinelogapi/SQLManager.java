@@ -79,7 +79,7 @@ public class SQLManager {
             shiftHours = 11.5;
         } else {
             start = Timestamp.valueOf(date + " 17:30:00");
-            end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            end = Timestamp.valueOf(LocalDateTime.parse(date + " 06:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             shiftHours = 12.5;
         }
 
@@ -181,7 +181,7 @@ public class SQLManager {
             shiftHours = 11.5;
         } else {
             start = Timestamp.valueOf(date + " 17:30:00");
-            end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            end = Timestamp.valueOf(LocalDateTime.parse(date + " 06:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             shiftHours = 12.5;
         }
 
@@ -273,11 +273,11 @@ public class SQLManager {
         Timestamp end;
 
         if (shift.equals("day")) {
-            start = Timestamp.valueOf(date + " 00:06:00");
+            start = Timestamp.valueOf(date + " 06:00:00");
             end = Timestamp.valueOf(date + " 17:30:00");
         } else {
             start = Timestamp.valueOf(date + " 17:30:00");
-            end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            end = Timestamp.valueOf(LocalDateTime.parse(date + " 06:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         }
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
@@ -358,11 +358,11 @@ public class SQLManager {
         Timestamp end;
 
         if (shift.equals("day")) {
-            start = Timestamp.valueOf(date + " 00:06:00");
+            start = Timestamp.valueOf(date + " 06:00:00");
             end = Timestamp.valueOf(date + " 17:30:00");
         } else {
             start = Timestamp.valueOf(date + " 17:30:00");
-            end = Timestamp.valueOf(LocalDateTime.parse(date + " 00:06:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            end = Timestamp.valueOf(LocalDateTime.parse(date + " 06:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         }
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
