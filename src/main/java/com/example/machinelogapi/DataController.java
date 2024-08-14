@@ -125,6 +125,22 @@ public class DataController {
         return dataService.checkAccountableKnitter(date, shift, machines);
     }
 
+    @PostMapping("/removeFault")
+    public CompletableFuture<Void> removeFault(@RequestBody(required = true) Map<String, Object> body) {
+        /**
+         * This method is used to remove a fault from the database.
+         * @param body
+         * @return
+         *
+         * Example URL:
+         * http://localhost:8080/api/removeFault
+         */
+        String date = body.get("date").toString();
+        Integer machineNumber = Integer.valueOf(body.get("machineNumber").toString());
+
+        return dataService.removeFault(date, machineNumber);
+    }
+
     @PostMapping("/setAccountableKnitter")
     public CompletableFuture<Void> setAccountableKnitter(@RequestBody Map<String, Object> body) {
         /**

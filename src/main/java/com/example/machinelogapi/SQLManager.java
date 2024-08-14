@@ -94,7 +94,7 @@ public class SQLManager {
         int totalMachines = 0; // To count total machines for average calculation
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
-            String sql = "SELECT machine_number, SUM(fault_time) FROM faults WHERE date >= ?::timestamp AND date < ?::timestamp GROUP BY machine_number";
+            String sql = "SELECT machine_number, SUM(fault_time) FROM faults WHERE date >= ?::timestamp AND date < ?::timestamp AND visible = TRUE GROUP BY machine_number";
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
                 pstmt.setTimestamp(1, start);
@@ -205,7 +205,7 @@ public class SQLManager {
                     "WHERE\n" +
                     "    f.machine_number = ?\n" +
                     "    AND date >= ?::timestamp AND date < ?::timestamp\n" +
-                    "GROUP BY\n" +
+                    "AND visible = TRUE GROUP BY\n" +
                     "    fc.code, fc.description;";
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
@@ -281,7 +281,7 @@ public class SQLManager {
         }
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
-            String sql = "SELECT date, fc.description AS Fault, o.name AS Operator, fault_time FROM faults f JOIN fault_codes fc ON f.fault_code = fc.code JOIN operators o ON f.operator_code = o.code WHERE machine_number = ? AND date >= ?::timestamp AND date < ?::timestamp ORDER BY date;";
+            String sql = "SELECT date, fc.description AS Fault, o.name AS Operator, fault_time FROM faults f JOIN fault_codes fc ON f.fault_code = fc.code JOIN operators o ON f.operator_code = o.code WHERE machine_number = ? AND date >= ?::timestamp AND date < ?::timestamp AND visible = TRUE ORDER BY date;";
 
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
@@ -366,7 +366,7 @@ public class SQLManager {
         }
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
-            String sql = "SELECT fc.description AS Fault, SUM(f.fault_time) AS Fault_Down_Time, COUNT(f.fault_code) AS Fault_Count FROM faults f JOIN fault_codes fc ON f.fault_code = fc.code WHERE machine_number = ? AND date >= ?::timestamp AND date < ?::timestamp GROUP BY fc.description;";
+            String sql = "SELECT fc.description AS Fault, SUM(f.fault_time) AS Fault_Down_Time, COUNT(f.fault_code) AS Fault_Count FROM faults f JOIN fault_codes fc ON f.fault_code = fc.code WHERE machine_number = ? AND date >= ?::timestamp AND date < ?::timestamp AND visible = TRUE GROUP BY fc.description;";
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
                 pstmt.setInt(1, Integer.parseInt(machineNumber));
@@ -619,6 +619,33 @@ public class SQLManager {
         }
 
         System.out.println("Knitting Fault Log:" + data);
+    }
+
+    public void removeFault(String date, Integer machineNumber) {
+        /**
+         * This method is used to remove a fault from the database
+         *
+         * @param date: The date in the format "yyyy-MM-dd"
+         *            Example: "2021-08-25"
+         *
+         * @param machineNumber: The machine number
+         *                     Example: 3
+         */
+        Timestamp dateTimestamp = Timestamp.valueOf(date);
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "UPDATE faults SET visible = FALSE WHERE date = ?::timestamp AND machine_number = ?;";
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setTimestamp(1, dateTimestamp);
+                pstmt.setInt(2, machineNumber);
+
+                pstmt.executeUpdate();
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void inputWarpingFaultLog(String data) {

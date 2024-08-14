@@ -59,6 +59,12 @@ public class DataService {
     }
 
     @Async
+    public CompletableFuture<Void> removeFault(String date, Integer machineNumber) {
+        sqlmanager.removeFault(date, machineNumber);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
     public CompletableFuture<Void> setAccountableKnitter(Integer Operator, String date, String shift, List<Integer> Machines) {
         sqlmanager.SetAccountableKnitter(Operator, date, shift, Machines);
         return CompletableFuture.completedFuture(null);
