@@ -434,6 +434,182 @@ public class SQLManager {
         return response;
     }
 
+    public void saveCorrectiveActions(String date, Integer machineNumber, Boolean isDayShift, List<Map<String, String>> faultsList) {
+        /**
+         * This method saves the corrective actions for a given machine number, date, and shift
+         *
+         * @param date: The date in the format "yyyy-MM-dd"
+         *            Example: "2021-08-25"
+         *
+         * @param machineNumber: The machine number
+         *                     Example: 3
+         *
+         * @param isDayShift: A boolean indicating if it is the day shift
+         *                  Example: true
+         *
+         * @param isLinearThread: A boolean indicating if the thread is linear
+         *                      Example: false
+         *
+         * @param faultsList: A list of maps containing the fault data
+         *                  Example: [ { "fault": "Standing", "observation": "asgfdas", "action": "asdgasdfg" }, { "fault": "False Stop", "observation": "asdgf", "action": "asdg" } ]
+         */
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "INSERT INTO corrective_actions (date, machine_number, isdayshift, fault_code, observation, action) VALUES (?::timestamp, ?, ?, ?, ?, ?);";
+
+            //delete any conflicting data
+            String deleteSql = "DELETE FROM corrective_actions WHERE date = ?::timestamp AND machine_number = ? AND isdayshift = ? AND fault_code = ?;";
+            System.out.println(date);
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                for (Map<String, String> fault : faultsList) {
+                    String getFaultCode = "SELECT code FROM fault_codes WHERE description = ?;";
+                    try (PreparedStatement pstmt2 = con.prepareStatement(getFaultCode)) {
+                        pstmt2.setString(1, fault.get("fault"));
+                        try (ResultSet rs = pstmt2.executeQuery()) {
+                            if (!rs.next()) {
+                                throw new RuntimeException("Fault code not found");
+                            }
+                            try (PreparedStatement pstmt3 = con.prepareStatement(deleteSql)) {
+                                pstmt3.setTimestamp(1, Timestamp.valueOf(date + " 00:00:00"));
+                                pstmt3.setInt(2, machineNumber);
+                                pstmt3.setBoolean(3, isDayShift);
+                                pstmt3.setInt(4, rs.getInt(1));
+                                pstmt3.executeUpdate();
+                            }
+                            pstmt.setTimestamp(1, Timestamp.valueOf(date + " 00:00:00"));
+                            pstmt.setInt(2, machineNumber);
+                            pstmt.setBoolean(3, isDayShift);
+                            pstmt.setInt(4, rs.getInt(1));
+                            pstmt.setString(5, fault.get("observation"));
+                            pstmt.setString(6, fault.get("action"));
+
+                            pstmt.executeUpdate();
+                        }
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public Map<String, Object> getCorrectiveAction(String date, Integer machineNumber, Boolean isDayShift, String fault) {
+        /**
+         * This method is used to get the corrective actions for a given machine number, date, and shift
+         * @param date
+         * @param machineNumber
+         * @param isDayShift
+         * @return
+         * Example URL:
+         */
+
+        Map<String, Object> response = new HashMap<>();
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "SELECT observation, action FROM corrective_actions WHERE date = ?::timestamp AND machine_number = ? AND isdayshift = ? AND fault_code = ?;";
+            String getFaultCode = "SELECT code FROM fault_codes WHERE description = ?;";
+
+            try (PreparedStatement pstmt = con.prepareStatement(getFaultCode)) {
+                pstmt.setString(1, fault);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (!rs.next()) {
+                        response.put("error", "Fault code not found");
+                        return response;
+                    }
+                    int faultCode = rs.getInt(1);
+                    try (PreparedStatement pstmt2 = con.prepareStatement(sql)) {
+                        pstmt2.setTimestamp(1, Timestamp.valueOf(date + " 00:00:00"));
+                        pstmt2.setInt(2, machineNumber);
+                        pstmt2.setBoolean(3, isDayShift);
+                        pstmt2.setInt(4, faultCode);
+
+                        try (ResultSet rs2 = pstmt2.executeQuery()) {
+                            if (!rs2.next()) {
+                                response.put("error", "No data found");
+                                return response;
+                            }
+
+                            response.put("observation", rs2.getString(1));
+                            response.put("action", rs2.getString(2));
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            response.put("error", "Failed to connect to the database");
+        }
+
+        return response;
+    }
+
+    public Boolean getLinearThread(String date, Integer machineNumber, Boolean isDayShift) {
+        /**
+         * This method is used to get the linear thread status for a given machine number, date, and shift
+         * @param date
+         * @param machineNumber
+         * @param isDayShift
+         * @return
+         * Example URL:
+         */
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            String sql = "SELECT islinearthread FROM linear_thread WHERE date = ?::timestamp AND machine_number = ? AND isdayshift = ?;";
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setTimestamp(1, Timestamp.valueOf(date + " 00:00:00"));
+                pstmt.setInt(2, machineNumber);
+                pstmt.setBoolean(3, isDayShift);
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (!rs.next()) {
+                        return false;
+                    }
+
+                    return rs.getBoolean(1);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void setLinearThread(String date, Integer machineNumber, Boolean isDayShift, Boolean isLinearThread) {
+        /**
+         * This method is used to set the linear thread status for a given machine number, date, and shift
+         * @param date
+         * @param machineNumber
+         * @param isDayShift
+         * @param isLinearThread
+         * Example URL:
+         */
+
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+
+            String deleteSql = "DELETE FROM linear_thread WHERE date = ?::timestamp AND machine_number = ? AND isdayshift = ?;";
+            try (PreparedStatement pstmt = con.prepareStatement(deleteSql)) {
+                pstmt.setTimestamp(1, Timestamp.valueOf(date + " 00:00:00"));
+                pstmt.setInt(2, machineNumber);
+                pstmt.setBoolean(3, isDayShift);
+                pstmt.executeUpdate();
+            }
+
+            String sql = "INSERT INTO linear_thread (date, machine_number, isdayshift, islinearthread) VALUES (?::timestamp, ?, ?, ?);";
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setTimestamp(1, Timestamp.valueOf(date + " 00:00:00"));
+                pstmt.setInt(2, machineNumber);
+                pstmt.setBoolean(3, isDayShift);
+                pstmt.setBoolean(4, isLinearThread);
+
+                pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
     public Map<Integer, String> getOperators() {
         /**
          * This method returns a list of operators

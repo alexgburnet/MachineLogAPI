@@ -49,6 +49,28 @@ public class DataService {
     }
 
     @Async
+    public CompletableFuture<Void> saveCorrectiveActions(String date, Integer machineNumber, Boolean isDayShift, List<Map<String, String>> faultsList) {
+        sqlmanager.saveCorrectiveActions(date, machineNumber, isDayShift, faultsList);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
+    public CompletableFuture<Map<String, Object>> getCorrectiveAction(String date, Integer machineNumber, Boolean isDayShift, String fault) {
+        return CompletableFuture.completedFuture(sqlmanager.getCorrectiveAction(date, machineNumber, isDayShift, fault));
+    }
+
+    @Async
+    public CompletableFuture<Boolean> getLinearThread(String date, Integer machineNumber, Boolean isDayShift) {
+        return CompletableFuture.completedFuture(sqlmanager.getLinearThread(date, machineNumber, isDayShift));
+    }
+
+    @Async
+    public CompletableFuture<Void> setLinearThread(String date, Integer machineNumber, Boolean isDayShift, Boolean linearThread) {
+        sqlmanager.setLinearThread(date, machineNumber, isDayShift, linearThread);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
     public CompletableFuture<Map<Integer, String>> getOperators() {
         return CompletableFuture.completedFuture(sqlmanager.getOperators());
     }

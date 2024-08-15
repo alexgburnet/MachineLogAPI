@@ -98,6 +98,88 @@ public class DataController {
         return dataService.getFaultReport(machineNumber, date, shift);
     }
 
+    @PostMapping("/saveFaultReport")
+    public CompletableFuture<Void> saveCorrectiveActions(@RequestBody(required = true) Map<String, Object> body) {
+        /**
+         * This method is used to save the fault report for a given machine number, date, and shift.
+         * @param body
+         * @return
+         *
+         * Example URL:
+         * http://localhost:8080/api/saveFaultReport
+         *
+         * Faults in format:
+         *
+         * "faults": [
+         *     {
+         *       "fault": "Standing",
+         *       "observation": "asgfdas",
+         *       "action": "asdgasdfg"
+         *     },
+         *     {
+         *       "fault": "False Stop",
+         *       "observation": "asdgf",
+         *       "action": "asdg"
+         *     }
+         *   ]
+         *
+         */
+
+        String date = body.get("date").toString();
+        Integer machineNumber = Integer.valueOf(body.get("machineNumber").toString());
+        boolean isDayShift = Boolean.parseBoolean(body.get("isDayShift").toString());
+        List<Map<String, String>> faultsList = (List<Map<String, String>>) body.get("faults");
+
+        return dataService.saveCorrectiveActions(date, machineNumber, isDayShift, faultsList);
+    }
+
+    @GetMapping("/getCorrectiveAction")
+    public CompletableFuture<Map<String, Object>> getCorrectiveAction(@RequestParam(required = true) String date, @RequestParam(required = true) Integer machineNumber, @RequestParam(required = true) Boolean isDayShift, @RequestParam(required = true) String fault) {
+        /**
+         * This method is used to get the corrective action for a given machine number, date, shift, and fault code.
+         * @param date
+         * @param machineNumber
+         * @param isDayShift
+         * @param faultCode
+         * @return
+         *
+         * Example URL:
+         * http://localhost:8080/api/getCorrectiveAction?date=2021-07-01&machineNumber=3&isDayShift=true&faultCode=1
+         */
+        return dataService.getCorrectiveAction(date, machineNumber, isDayShift, fault);
+    }
+
+    @GetMapping("/getLinearThread")
+    public CompletableFuture<Boolean> getLinearThread(@RequestParam(required = true) String date, @RequestParam(required = true) Integer machineNumber, @RequestParam(required = true) Boolean isDayShift) {
+        /**
+         * This method is used to get the linear thread status for a given machine number, date, and shift.
+         * @param date
+         * @param machineNumber
+         * @param isDayShift
+         * @return
+         *
+         * Example URL:
+         * http://localhost:8080/api/getLinearThread?date=2021-07-01&machineNumber=3&isDayShift=true
+         */
+        return dataService.getLinearThread(date, machineNumber, isDayShift);
+    }
+
+    @PostMapping("/setLinearThread")
+    public CompletableFuture<Void> setLinearThread(@RequestParam(required = true) String date, @RequestParam(required = true) Integer machineNumber, @RequestParam(required = true) Boolean isDayShift, @RequestParam(required = true) Boolean linearThread) {
+        /**
+         * This method is used to set the linear thread status for a given machine number, date, shift, and linear thread status.
+         * @param date
+         * @param machineNumber
+         * @param isDayShift
+         * @param linearThread
+         * @return
+         *
+         * Example URL:
+         * http://localhost:8080/api/setLinearThread?date=2021-07-01&machineNumber=3&isDayShift=true&linearThread=true
+         */
+        return dataService.setLinearThread(date, machineNumber, isDayShift, linearThread);
+    }
+
     @GetMapping("/operators")
     public CompletableFuture<Map<Integer, String>> getOperators() {
         /**
