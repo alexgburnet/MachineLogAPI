@@ -395,7 +395,8 @@ public class SQLManager {
                     for (Map.Entry<String, Double> entry : faultDownTime.entrySet()) {
                         String fault = entry.getKey();
                         double downTime = entry.getValue();
-                        double downTimePercentage = downTime / totalDownTime * 100;
+                        double downTimePercentage = (totalDownTime == 0.0) ? 100 : downTime / totalDownTime * 100;
+                        System.out.println("Down time % to round:" + downTimePercentage);
                         downTimePercentage = roundToOneDecimalPlace(downTimePercentage);
                         faultTimePercentage.put(fault, downTimePercentage);
 
