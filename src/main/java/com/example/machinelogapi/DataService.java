@@ -71,6 +71,17 @@ public class DataService {
     }
 
     @Async
+    public CompletableFuture<Map<String, Object>> getActionList() {
+        return CompletableFuture.completedFuture(sqlmanager.getActionList());
+    }
+
+    @Async
+    public CompletableFuture<Void> completeAction(Integer id) {
+        sqlmanager.completeAction(id);
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
     public CompletableFuture<Map<Integer, String>> getOperators() {
         return CompletableFuture.completedFuture(sqlmanager.getOperators());
     }

@@ -396,7 +396,6 @@ public class SQLManager {
                         String fault = entry.getKey();
                         double downTime = entry.getValue();
                         double downTimePercentage = (totalDownTime == 0.0) ? 100 : downTime / totalDownTime * 100;
-                        System.out.println("Down time % to round:" + downTimePercentage);
                         downTimePercentage = roundToOneDecimalPlace(downTimePercentage);
                         faultTimePercentage.put(fault, downTimePercentage);
 
@@ -460,7 +459,6 @@ public class SQLManager {
 
             //delete any conflicting data
             String deleteSql = "DELETE FROM corrective_actions WHERE date = ?::timestamp AND machine_number = ? AND isdayshift = ? AND fault_code = ?;";
-            System.out.println(date);
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
                 for (Map<String, String> fault : faultsList) {
@@ -609,6 +607,51 @@ public class SQLManager {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public Map<String, Object> getActionList() {
+        Map<String, Object> response = new HashMap<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        String sql = "SELECT * FROM corrective_actions WHERE completed = FALSE ORDER BY date ASC;";
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    List<Map<String, Object>> actionList = new ArrayList<>();
+                    while (rs.next()) {
+                        LocalDateTime localDateTime = rs.getTimestamp(2).toLocalDateTime();
+                        String formattedDateTime = localDateTime.format(formatter);
+                        Map<String, Object> action = new HashMap<>();
+                        action.put("id", rs.getInt(1));
+                        action.put("date", formattedDateTime);
+                        action.put("machine_number", rs.getInt(3));
+                        action.put("isdayshift", rs.getBoolean(4));
+                        action.put("fault_code", rs.getInt(5));
+                        action.put("observation", rs.getString(6));
+                        action.put("action", rs.getString(7));
+                        actionList.add(action);
+                    }
+
+                    response.put("actionList", actionList);
+                }
+            }
+        } catch (SQLException e) {
+            response.put("error", e.toString());
+        }
+
+        return response;
+    }
+
+    public void completeAction(Integer id) {
+        String sql = "UPDATE corrective_actions SET completed = TRUE WHERE id = ?;";
+        try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
+            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                pstmt.setInt(1, id);
+                pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Map<Integer, String> getOperators() {

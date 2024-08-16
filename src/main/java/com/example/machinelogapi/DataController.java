@@ -180,6 +180,33 @@ public class DataController {
         return dataService.setLinearThread(date, machineNumber, isDayShift, linearThread);
     }
 
+    @GetMapping("/actionList")
+    public CompletableFuture<Map<String, Object>> getActionList() {
+        /**
+         * This method is used to get the list of actions.
+         * @return
+         *
+         * Example URL:
+         * http://localhost:8080/api/actionList
+         */
+        return dataService.getActionList();
+    }
+
+    @PostMapping("completeAction")
+    public CompletableFuture<Void> completeAction(@RequestBody(required = true) Map<String, Object> body) {
+        /**
+         * This method is used to complete an action.
+         * @param body
+         * @return
+         *
+         * Example URL:
+         * http://localhost:8080/api/completeAction
+         */
+        int id = Integer.parseInt(body.get("id").toString());
+
+        return dataService.completeAction(id);
+    }
+
     @GetMapping("/operators")
     public CompletableFuture<Map<Integer, String>> getOperators() {
         /**
