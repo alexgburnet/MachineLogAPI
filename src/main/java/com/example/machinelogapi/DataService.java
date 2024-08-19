@@ -76,8 +76,8 @@ public class DataService {
     }
 
     @Async
-    public CompletableFuture<Void> completeAction(Integer id) {
-        sqlmanager.completeAction(id);
+    public CompletableFuture<Void> completeAction(Integer id, String date) {
+        sqlmanager.completeAction(id, date);
         return CompletableFuture.completedFuture(null);
     }
 

@@ -204,7 +204,9 @@ public class DataController {
          */
         int id = Integer.parseInt(body.get("id").toString());
 
-        return dataService.completeAction(id);
+        String date = body.get("date").toString();
+
+        return dataService.completeAction(id, date);
     }
 
     @GetMapping("/operators")

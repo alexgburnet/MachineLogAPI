@@ -508,7 +508,7 @@ public class SQLManager {
         Map<String, Object> response = new HashMap<>();
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
-            String sql = "SELECT observation, action FROM corrective_actions WHERE date = ?::timestamp AND machine_number = ? AND isdayshift = ? AND fault_code = ?;";
+            String sql = "SELECT observation, action FROM corrective_actions WHERE date = ?::timestamp AND machine_number = ? AND isdayshift = ? AND fault_code = ? AND completed = FALSE;";
             String getFaultCode = "SELECT code FROM fault_codes WHERE description = ?;";
 
             try (PreparedStatement pstmt = con.prepareStatement(getFaultCode)) {
@@ -642,11 +642,12 @@ public class SQLManager {
         return response;
     }
 
-    public void completeAction(Integer id) {
-        String sql = "UPDATE corrective_actions SET completed = TRUE WHERE id = ?;";
+    public void completeAction(Integer id, String date) {
+        String sql = "UPDATE corrective_actions SET completed = TRUE, date_completed = ? WHERE id = ?;";
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-                pstmt.setInt(1, id);
+                pstmt.setTimestamp(1, Timestamp.valueOf(date));
+                pstmt.setInt(2, id);
                 pstmt.executeUpdate();
             }
         } catch (SQLException e) {
