@@ -281,7 +281,7 @@ public class SQLManager {
         }
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
-            String sql = "SELECT date, fc.description AS Fault, o.name AS Operator, fault_time FROM faults f JOIN fault_codes fc ON f.fault_code = fc.code JOIN operators o ON f.operator_code = o.code WHERE machine_number = ? AND date >= ?::timestamp AND date < ?::timestamp AND visible = TRUE ORDER BY date;";
+            String sql = "SELECT id, date, fc.description AS Fault, o.name AS Operator, fault_time FROM faults f JOIN fault_codes fc ON f.fault_code = fc.code JOIN operators o ON f.operator_code = o.code WHERE machine_number = ? AND date >= ?::timestamp AND date < ?::timestamp AND visible = TRUE ORDER BY date;";
 
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
@@ -292,17 +292,19 @@ public class SQLManager {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
 
-                        LocalDateTime localDateTime = rs.getTimestamp(1).toLocalDateTime();
+                        int id = rs.getInt(1);
+                        LocalDateTime localDateTime = rs.getTimestamp(2).toLocalDateTime();
                         // Define the formatter
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                         // Format the LocalDateTime to string
                         String formattedDateTime = localDateTime.format(formatter);
 
                         Map<String, Object> faultData = new HashMap<>();
+                        faultData.put("ID", id);
                         faultData.put("Date", formattedDateTime);
-                        faultData.put("Fault", rs.getString(2));
-                        faultData.put("Fault Time", rs.getString(4));
-                        faultData.put("Operator", rs.getString(3));
+                        faultData.put("Fault", rs.getString(3));
+                        faultData.put("Fault Time", rs.getString(5));
+                        faultData.put("Operator", rs.getString(4));
 
                         faultLog.add(faultData);
                     }
@@ -842,28 +844,21 @@ public class SQLManager {
         System.out.println("Knitting Fault Log:" + data);
     }
 
-    public void removeFault(String date, Integer machineNumber) {
+    public void removeFault(Integer ID) {
         /**
          * This method is used to remove a fault from the database
          *
-         * @param date: The date in the format "yyyy-MM-dd"
-         *            Example: "2021-08-25"
+         * @param ID: The date of the fault to be removed
          *
-         * @param machineNumber: The machine number
-         *                     Example: 3
          */
-        Timestamp dateTimestamp = Timestamp.valueOf(date);
 
         try (Connection con = DriverManager.getConnection(dbURL, username, password)) {
-            String sql = "UPDATE faults SET visible = FALSE WHERE date = ?::timestamp AND machine_number = ?;";
+            String sql = "UPDATE faults SET visible = FALSE WHERE id = ?";
 
             try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-                pstmt.setTimestamp(1, dateTimestamp);
-                pstmt.setInt(2, machineNumber);
-
+                pstmt.setInt(1, ID);
                 pstmt.executeUpdate();
             }
-
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

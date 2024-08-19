@@ -246,10 +246,10 @@ public class DataController {
          * Example URL:
          * http://localhost:8080/api/removeFault
          */
-        String date = body.get("date").toString();
-        Integer machineNumber = Integer.valueOf(body.get("machineNumber").toString());
 
-        return dataService.removeFault(date, machineNumber);
+        Integer ID = Integer.valueOf(body.get("ID").toString());
+
+        return dataService.removeFault(ID);
     }
 
     @PostMapping("/setAccountableKnitter")

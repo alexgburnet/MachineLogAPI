@@ -92,8 +92,8 @@ public class DataService {
     }
 
     @Async
-    public CompletableFuture<Void> removeFault(String date, Integer machineNumber) {
-        sqlmanager.removeFault(date, machineNumber);
+    public CompletableFuture<Void> removeFault(Integer ID) {
+        sqlmanager.removeFault(ID);
         return CompletableFuture.completedFuture(null);
     }
 
