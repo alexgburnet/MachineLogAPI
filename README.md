@@ -1,5 +1,11 @@
 # MachineLogAPI
 
-Uses SpringBoot library to act as a back end, providing data on machine running times for the factory dashboard front end react application.
+## V1.0
 
-Uses jcifs to connect to the company SMB server to obtain the data from CSV files (Soon to be converted to a postgres database hosted locally on the pi)
+### SpringBoot library:
+- Interacts with PostgreSQL database
+- It accepts both
+-   post requests (for adding faults, actions etc... to the database)
+-   Get requests (for getting data from the database for machine reports etc...
+
+- Works Asynchronously so can handle multiple requests concurrently
