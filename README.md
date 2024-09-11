@@ -36,7 +36,7 @@ Compile and run using Gradle. Ensure that the JDBC driver is included in the bui
 ## Database Structure:
 
 <p align="center">
-  <img src="https://github.com/alexgburnet/MachineLogAPI/blob/master/assets/Machine%20Log%20API%20ERD.png" alt="learning page" width="500"/>
+  <img src="https://github.com/alexgburnet/MachineLogAPI/blob/master/assets/Machine%20Log%20API%20ERD.png" alt="learning page" width="700"/>
 </p>
 
 Example:
