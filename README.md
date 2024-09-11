@@ -105,6 +105,8 @@ CREATE TABLE linear_thread (
 
 **Returns**: A JSON object with keys "observation" and "action", or an error message if no data is found.
 
+---
+
 ### `GET /api/linear-thread`
 
 **Description**: Retrieves the linear thread status for a given machine number, date, and shift.
@@ -116,6 +118,8 @@ CREATE TABLE linear_thread (
 - `isDayShift`: Boolean indicating whether it is a day shift.
 
 **Returns**: A boolean indicating if the linear thread is active or not.
+
+---
 
 ### `POST /api/linear-thread`
 
@@ -129,6 +133,8 @@ CREATE TABLE linear_thread (
 - `isLinearThread`: Boolean indicating the status of the linear thread.
 
 **Returns**: Success or error message.
+
+---
 
 ### `GET /api/action-list`
 
@@ -147,11 +153,15 @@ CREATE TABLE linear_thread (
 
 **Returns**: Success or error message.
 
+---
+
 ### `GET /api/operators`
 
 **Description**: Retrieves a list of operators with their codes and names.
 
 **Returns**: A JSON object where the key is the operator code and the value is the operator name.
+
+---
 
 ### `GET /api/accountable-knitter`
 
@@ -164,6 +174,8 @@ CREATE TABLE linear_thread (
 - `machines`: A list of machine numbers.
 
 **Returns**: A JSON object where the key is the machine number and the value is the knitter’s name, or -1 and "Unassigned" if no knitter is assigned.
+
+---
 
 ### `POST /api/accountable-knitter`
 
@@ -178,6 +190,8 @@ CREATE TABLE linear_thread (
 
 **Returns**: Success or error message.
 
+---
+
 ### `POST /api/knitting-fault-log`
 
 **Description**: Inserts a knitting fault log into the database.
@@ -187,6 +201,8 @@ CREATE TABLE linear_thread (
 - `data`: The fault log data in the format "dd/MM/yyyy hh:mm:ss;fault_code;fault_description;operator_code;operator_name;fault_time;machine_number".
 
 **Returns**: Success or error message.
+
+---
 
 ### `POST /api/remove-fault`
 
@@ -198,6 +214,8 @@ CREATE TABLE linear_thread (
 
 **Returns**: Success or error message.
 
+---
+
 ### `POST /api/warping-fault-log`
 
 **Description**: Placeholder method for inserting a warping fault log into the database.
@@ -207,6 +225,8 @@ CREATE TABLE linear_thread (
 - `data`: The fault log data.
 
 **Returns**: Success or error message.
+
+---
 
 ### `POST /api/knitting-production-log`
 
@@ -218,6 +238,8 @@ CREATE TABLE linear_thread (
 
 **Returns**: Success or error message.
 
+---
+
 ### `POST /api/warping-production-log`
 
 **Description**: Placeholder method for inserting a warping production log into the database.
@@ -227,6 +249,8 @@ CREATE TABLE linear_thread (
 - `data`: The production log data.
 
 **Returns**: Success or error message.
+
+---
 
 ### `POST /api/knitting-warp-ref-log`
 
