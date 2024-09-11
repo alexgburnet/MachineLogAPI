@@ -1,11 +1,182 @@
-# MachineLogAPI
+# Machine Operations and Fault Logs API
 
-## V1.0
+## Project Overview
 
-### SpringBoot library:
-- Interacts with PostgreSQL database
-- It accepts both
--   post requests (for adding faults, actions etc... to the database)
--   Get requests (for getting data from the database for machine reports etc...
+This project provides an API for managing machine operations, including corrective actions, linear thread status, accountable knitters, and various fault logs. It includes methods for querying and updating machine data, assigning operators, and recording faults and production logs.
 
-- Works Asynchronously so can handle multiple requests concurrently
+## Prerequisites
+
+- Java 11 or higher
+- PostgreSQL database
+- JDBC driver for PostgreSQL
+
+## Setup
+
+1. **Clone the Repository**
+
+```bash
+git clone https://github.com/alexgburnet/MachineLogAPI.git
+cd MachineLogAPI
+```
+
+2. **Configure Database**
+
+Update the database configuration details in your code. Set the dbURL, username, and password to match your PostgreSQL database settings.
+Add a config.properties file to root:
+
+```config
+psql.username=<your_user>
+psql.password=<your_password>
+```
+
+3. **Compile and run**
+
+Compile and run using Gradle. Ensure that the JDBC driver is included in the build config.
+
+## API Endpoints
+
+### `GET /api/corrective-action`
+
+**Description**: Retrieves corrective actions for a given machine number, date, and shift.
+
+**Inputs**:
+
+- `date`: The date in the format "yyyy-MM-dd".
+- `machineNumber`: The machine number.
+- `isDayShift`: Boolean indicating whether it is a day shift.
+- `fault`: The fault description.
+
+**Returns**: A JSON object with keys "observation" and "action", or an error message if no data is found.
+
+### `GET /api/linear-thread`
+
+**Description**: Retrieves the linear thread status for a given machine number, date, and shift.
+
+**Inputs**:
+
+- `date`: The date in the format "yyyy-MM-dd".
+- `machineNumber`: The machine number.
+- `isDayShift`: Boolean indicating whether it is a day shift.
+
+**Returns**: A boolean indicating if the linear thread is active or not.
+
+### `POST /api/linear-thread`
+
+**Description**: Sets the linear thread status for a given machine number, date, and shift. Replaces any existing entry.
+
+**Inputs**:
+
+- `date`: The date in the format "yyyy-MM-dd".
+- `machineNumber`: The machine number.
+- `isDayShift`: Boolean indicating whether it is a day shift.
+- `isLinearThread`: Boolean indicating the status of the linear thread.
+
+**Returns**: Success or error message.
+
+### `GET /api/action-list`
+
+**Description**: Retrieves a list of incomplete corrective actions, ordered by date.
+
+**Returns**: A JSON object containing a list of corrective actions with their details.
+
+### `POST /api/complete-action`
+
+**Description**: Marks a corrective action as completed.
+
+**Inputs**:
+
+- `id`: The ID of the corrective action.
+- `date`: The completion date in the format "yyyy-MM-dd HH:mm:ss".
+
+**Returns**: Success or error message.
+
+### `GET /api/operators`
+
+**Description**: Retrieves a list of operators with their codes and names.
+
+**Returns**: A JSON object where the key is the operator code and the value is the operator name.
+
+### `GET /api/accountable-knitter`
+
+**Description**: Checks if an accountable knitter is assigned to machines for a given date and shift.
+
+**Inputs**:
+
+- `date`: The date in the format "yyyy-MM-dd".
+- `shift`: The shift ("day" or "night").
+- `machines`: A list of machine numbers.
+
+**Returns**: A JSON object where the key is the machine number and the value is the knitter’s name, or -1 and "Unassigned" if no knitter is assigned.
+
+### `POST /api/accountable-knitter`
+
+**Description**: Sets an accountable knitter for the given machines, replacing any existing assignments.
+
+**Inputs**:
+
+- `operator`: The operator code.
+- `date`: The date in the format "yyyy-MM-dd".
+- `shift`: The shift ("day" or "night").
+- `machines`: A list of machine numbers.
+
+**Returns**: Success or error message.
+
+### `POST /api/knitting-fault-log`
+
+**Description**: Inserts a knitting fault log into the database.
+
+**Inputs**:
+
+- `data`: The fault log data in the format "dd/MM/yyyy hh:mm:ss;fault_code;fault_description;operator_code;operator_name;fault_time;machine_number".
+
+**Returns**: Success or error message.
+
+### `POST /api/remove-fault`
+
+**Description**: Marks a fault as not visible, effectively removing it from the visible records.
+
+**Inputs**:
+
+- `ID`: The ID of the fault to be removed.
+
+**Returns**: Success or error message.
+
+### `POST /api/warping-fault-log`
+
+**Description**: Placeholder method for inserting a warping fault log into the database.
+
+**Inputs**:
+
+- `data`: The fault log data.
+
+**Returns**: Success or error message.
+
+### `POST /api/knitting-production-log`
+
+**Description**: Placeholder method for inserting a knitting production log into the database.
+
+**Inputs**:
+
+- `data`: The production log data.
+
+**Returns**: Success or error message.
+
+### `POST /api/warping-production-log`
+
+**Description**: Placeholder method for inserting a warping production log into the database.
+
+**Inputs**:
+
+- `data`: The production log data.
+
+**Returns**: Success or error message.
+
+### `POST /api/knitting-warp-ref-log`
+
+**Description**: Placeholder method for inserting a knitting warp reference log into the database.
+
+**Inputs**:
+
+- `data`: The warp reference log data.
+
+**Returns**: Success or error message.
