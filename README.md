@@ -33,6 +33,63 @@ psql.password=<your_password>
 
 Compile and run using Gradle. Ensure that the JDBC driver is included in the build config.
 
+## Database Structure:
+
+<p align="center">
+  <img src="https://github.com/alexgburnet/MachineLogAPI/blob/master/assets/Machine%20Log%20API%20ERD.png" alt="learning page" width="500"/>
+</p>
+
+Example:
+```sql
+CREATE TABLE fault_codes (
+    code INT PRIMARY KEY,
+    description TEXT NOT NULL
+);
+
+CREATE TABLE operators (
+    code INT PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE faults (
+    id SERIAL PRIMARY KEY,
+    date TIMESTAMP NOT NULL,
+    fault_code INT REFERENCES fault_codes(code),
+    operator_code INT REFERENCES operators(code),
+    fault_time INTERVAL NOT NULL,
+    machine_number INT NOT NULL,
+    visible BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE accountable_knitter (
+	id serial PRIMARY KEY,
+	date TIMESTAMP NOT NULL,
+	shift TEXT NOT NULL,
+	machine_number INT NOT NULL,
+	operator INT NOT NULL
+);
+
+CREATE TABLE corrective_actions (
+    id SERIAL PRIMARY KEY,
+    date TIMESTAMP NOT NULL,
+    machine_number INT NOT NULL,
+    isDayShift BOOLEAN NOT NULL,
+    isLinearThread BOOLEAN NOT NULL,
+    fault_code INT REFERENCES fault_codes(code),
+    observation TEXT,
+    action TEXT,
+	date_completed TIMESTAMP
+);
+
+CREATE TABLE linear_thread (
+    id SERIAL PRIMARY KEY,
+    date TIMESTAMP NOT NULL,
+    machine_number INT NOT NULL,
+    isDayShift BOOLEAN NOT NULL,
+    islinearthread BOOLEAN DEFAULT false
+)
+```
+
 ## API Endpoints
 
 ### `GET /api/corrective-action`
